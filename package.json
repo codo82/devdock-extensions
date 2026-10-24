@@ -2,6 +2,9 @@
   "name": "devdock-extensions",
   "private": true,
   "description": "Official DevDock extensions and catalog: one folder per extension, installable from the DevDock Extensions panel",
+  "workspaces": [
+    "mongo-client"
+  ],
   "scripts": {
     "test": "node --test",
     "catalog": "node scripts/catalog.js",
@@ -11,6 +14,7 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "devdock": "github:codo82/devdock#main"
+    "devdock": "github:codo82/devdock#main",
+    "mongodb-memory-server": "^11.3.0"
   }
 }

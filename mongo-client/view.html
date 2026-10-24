@@ -1,0 +1,26 @@
+<div class="empty-state" data-role="empty"><div class="icon">🍃</div><p data-i18n="main.empty"></p></div>
+<div class="mg-workspace" data-role="workspace" hidden>
+  <div class="mg-header">
+    <span class="mg-path" data-role="path"></span>
+    <span class="mg-badge" data-role="read-only" data-i18n="main.readOnly" data-i18n-title="main.readOnlyTitle" hidden></span>
+    <div class="mg-header-actions">
+      <button class="btn btn-ghost btn-sm" data-action="indexes" data-i18n="main.indexes" data-i18n-title="main.indexesTitle"></button>
+      <button class="btn btn-ghost btn-sm" data-action="export" data-i18n="main.export" data-i18n-title="main.exportTitle"></button>
+      <button class="btn btn-ghost btn-sm" data-action="insert" data-role="insert-btn" data-i18n="main.insert" data-i18n-title="main.insertTitle"></button>
+    </div>
+  </div>
+  <form class="mg-query" data-role="query-form" autocomplete="off">
+    <label class="mg-field mg-field-filter"><span data-i18n="query.filter"></span>
+      <input class="form-input mg-code" data-role="filter" spellcheck="false" placeholder="{ &quot;status&quot;: &quot;active&quot; }"></label>
+    <label class="mg-field"><span data-i18n="query.sort"></span>
+      <input class="form-input mg-code" data-role="sort" spellcheck="false" placeholder="{ &quot;_id&quot;: -1 }"></label>
+    <label class="mg-field"><span data-i18n="query.projection"></span>
+      <input class="form-input mg-code" data-role="projection" spellcheck="false" placeholder="{ &quot;name&quot;: 1 }"></label>
+    <label class="mg-field mg-field-limit"><span data-i18n="query.limit"></span>
+      <select class="form-input" data-role="limit"></select></label>
+    <button class="btn btn-primary btn-sm" type="submit" data-i18n="query.find" data-i18n-title="query.findTitle"></button>
+    <button class="btn btn-ghost btn-sm" type="button" data-action="reset-query" data-i18n="query.reset"></button>
+  </form>
+  <div class="mg-bar" data-role="bar"></div>
+  <div class="mg-docs" data-role="docs"></div>
+</div>

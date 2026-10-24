@@ -6,8 +6,9 @@ Official extensions for [DevDock](https://github.com/codo82/devdock), the local 
 |---|---|---|
 | ⚙️ PM2 | [`pm2`](pm2) | PM2 processes: list, start/stop/restart/delete, streaming logs; npm scripts started under PM2 from the NPM section |
 | 🔌 Ports | [`ports`](ports) | Listening TCP ports with their process, linked to what DevDock started (npm, PM2, tunnels); stop of the process that holds a port |
+| 🍃 MongoDB | [`mongo-client`](mongo-client) | MongoDB client: connections (host, URI or SSH tunnel) with passwords in the DevDock vault, databases and collections, documents in Extended JSON with filter, sort and projection, confirmed inserts, edits and deletes, JSON export, read-only MCP tools |
 
-Both were built into DevDock up to 1.23 and require DevDock 2.0 or later.
+PM2 and Ports were built into DevDock up to 1.23. All of them require DevDock 2.0 or later.
 
 ## Install
 
@@ -16,9 +17,10 @@ From DevDock: 🧩 **Extensions** → **Catalog** → *Install…*, or from the 
 ```bash
 npm run ext -- install pm2
 npm run ext -- install ports
+npm run ext -- install mongo-client
 ```
 
-Any extension can also be installed by URL (🧩 → **From URL**): `https://github.com/codo82/devdock-extensions.git` with the folder of the extension (`pm2`, `ports`).
+Any extension can also be installed by URL (🧩 → **From URL**): `https://github.com/codo82/devdock-extensions.git` with the folder of the extension (`pm2`, `ports`, `mongo-client`).
 
 ## Versions
 
@@ -27,10 +29,12 @@ Every extension has its own version, in its `setting.json` and in its `CHANGELOG
 ## Development
 
 ```bash
-npm install          # installs DevDock (devDependency) with its test kit
+npm install          # installs DevDock (devDependency) with its test kit, and the extensions' packages (npm workspaces)
 npm test             # every extension's tests (DevDock started with the extension installed)
 npm run catalog      # rewrites index.json from the manifests
 ```
+
+The `mongo-client` tests start a real MongoDB with [mongodb-memory-server](https://github.com/typegoose/mongodb-memory-server), which downloads the `mongod` binary on first use (cached in `~/.cache/mongodb-binaries`); without network access to `fastdl.mongodb.org` those tests are skipped.
 
 To try an extension in a running DevDock while developing it, link its folder into the installed extensions:
 
@@ -43,7 +47,7 @@ The extension contract (manifest, backend and frontend `ctx`, configuration, tra
 ## Adding an extension
 
 1. Create a folder named as the extension `code`, with `setting.json` (`version` and `devdock` are required), the backend and frontend files, `i18n/it.json` and `i18n/en.json`, `CHANGELOG.md` with an `## [Unreleased]` section, and `tests/` (they use `require('devdock/testkit')`: `startServer(config, { install: [path.join(__dirname, '..')] })` starts DevDock with the extension installed, `i18nProblems(dir)` checks its translations).
-2. npm packages used by the extension go in its own `package.json` (`dependencies`): an installed extension doesn't see DevDock's packages. They are installed with `--ignore-scripts`, so packages that need to compile native code at install time can't be used.
+2. npm packages used by the extension go in its own `package.json` (`dependencies`), and the folder goes in the `workspaces` of the root `package.json` so that `npm install` makes them available to the tests: an installed extension doesn't see DevDock's packages. They are installed with `--ignore-scripts`, so packages that need to compile native code at install time can't be used.
 3. `npm run catalog` and commit `index.json` (the CI fails when it is out of date).
 
 ## Release

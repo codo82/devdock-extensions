@@ -2,6 +2,22 @@
   "name": "DevDock official extensions",
   "extensions": [
     {
+      "code": "mongo-client",
+      "name": {
+        "it": "MongoDB",
+        "en": "MongoDB"
+      },
+      "description": {
+        "it": "Client MongoDB: connessioni con password nel vault, database e collezioni, documenti in Extended JSON, modifiche sempre confermate",
+        "en": "MongoDB client: connections with passwords in the vault, databases and collections, documents in Extended JSON, changes always confirmed"
+      },
+      "icon": "🍃",
+      "version": "1.0.0",
+      "devdock": "^2.0",
+      "repo": "https://github.com/codo82/devdock-extensions.git",
+      "path": "mongo-client"
+    },
+    {
       "code": "pm2",
       "name": "PM2",
       "description": {
