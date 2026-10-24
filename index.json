@@ -1,0 +1,34 @@
+{
+  "name": "DevDock official extensions",
+  "extensions": [
+    {
+      "code": "pm2",
+      "name": "PM2",
+      "description": {
+        "it": "Processi PM2: lista, start/stop/restart/delete e log in streaming",
+        "en": "PM2 processes: list, start/stop/restart/delete and streaming logs"
+      },
+      "icon": "⚙️",
+      "version": "1.0.0",
+      "devdock": "^2.0",
+      "repo": "https://github.com/codo82/devdock-extensions.git",
+      "path": "pm2"
+    },
+    {
+      "code": "ports",
+      "name": {
+        "it": "Porte",
+        "en": "Ports"
+      },
+      "description": {
+        "it": "Porte TCP in ascolto con il processo che le usa, collegate a script npm, PM2 e tunnel; arresto del processo che occupa una porta",
+        "en": "Listening TCP ports with the process using them, linked to npm scripts, PM2 and tunnels; stop the process that holds a port"
+      },
+      "icon": "🔌",
+      "version": "1.0.0",
+      "devdock": "^2.0",
+      "repo": "https://github.com/codo82/devdock-extensions.git",
+      "path": "ports"
+    }
+  ]
+}

@@ -3,7 +3,9 @@ const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
 const { spawn } = require('child_process');
-const { startServer, tmpDir, makeRepo } = require('../../../lib/testkit');
+const { startServer, tmpDir, makeRepo } = require('devdock/testkit');
+
+const EXT = path.join(__dirname, '..'); // l'estensione sotto test, installata nel DevDock di prova
 
 const listenScript = port => `require('http').createServer((q, r) => r.end('ok')).listen(${port}, '127.0.0.1')`;
 const freePort = () => new Promise(r => { const s = require('net').createServer().listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => r(port)); }); });
@@ -14,7 +16,7 @@ let srv, repo, npmPort;
 before(async () => {
   npmPort = await freePort();
   repo = makeRepo(path.join(tmpDir(), 'web'), { scripts: { serve: `node -e "${listenScript(npmPort)}"` } });
-  srv = await startServer({ groups: [], servers: [], projects: [{ id: 'web', label: 'Web', path: repo }] });
+  srv = await startServer({ groups: [], servers: [], projects: [{ id: 'web', label: 'Web', path: repo }] }, { install: [EXT] });
 });
 after(() => srv?.stop());
 

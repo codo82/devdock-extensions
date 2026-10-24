@@ -1,12 +1,14 @@
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
-const { startServer, tmpDir, makeRepo } = require('../../../lib/testkit');
+const { startServer, tmpDir, makeRepo } = require('devdock/testkit');
+
+const EXT = path.join(__dirname, '..'); // l'estensione sotto test, installata nel DevDock di prova
 
 let srv;
 before(async () => {
   const projectDir = makeRepo(path.join(tmpDir(), 'app'), { scripts: { hello: 'echo ciao' } });
-  srv = await startServer({ groups: [], servers: [], projects: [{ id: 'app', label: 'App', path: projectDir }] });
+  srv = await startServer({ groups: [], servers: [], projects: [{ id: 'app', label: 'App', path: projectDir }] }, { install: [EXT] });
 });
 after(() => srv.stop());
 
@@ -41,7 +43,7 @@ if [ "$1" = "jlist" ]; then
   echo '[{"pm_id":0,"name":"api","pid":123,"monit":{"cpu":1,"memory":52428800},"pm2_env":{"status":"online","restart_time":2}}]'
 fi
 `, { mode: 0o755 });
-  const fake = await startServer({ groups: [], servers: [], projects: [] }, { env: { PATH: `${bin}:${process.env.PATH}` } });
+  const fake = await startServer({ groups: [], servers: [], projects: [] }, { install: [EXT], env: { PATH: `${bin}:${process.env.PATH}` } });
   try {
     const list = (await fake.request('GET', '/api/ext/pm2/list')).json;
     assert.deepEqual(list, [{ id: 0, name: 'api', status: 'online', pid: 123, cpu: 1, memory: 52428800, restarts: 2 }]);
