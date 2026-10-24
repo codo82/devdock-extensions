@@ -8,8 +8,8 @@
         "en": "MongoDB"
       },
       "description": {
-        "it": "Client MongoDB: connessioni con password nel vault, database e collezioni, documenti in Extended JSON, modifiche sempre confermate",
-        "en": "MongoDB client: connections with passwords in the vault, databases and collections, documents in Extended JSON, changes always confirmed"
+        "it": "Client MongoDB: connessioni con password nel vault, editor mongosh, documenti in JSON o tabella, modifiche sempre confermate, collezioni e indici, export JSON/CSV/script",
+        "en": "MongoDB client: connections with passwords in the vault, mongosh editor, documents as JSON or table, changes always confirmed, collections and indexes, JSON/CSV/script export"
       },
       "icon": "🍃",
       "version": "1.0.0",

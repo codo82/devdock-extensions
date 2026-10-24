@@ -1,68 +1,298 @@
 {
-  "name": { "it": "MongoDB", "en": "MongoDB" },
+  "name": {
+    "it": "MongoDB",
+    "en": "MongoDB"
+  },
   "code": "mongo-client",
   "version": "1.0.0",
   "devdock": "^2.0",
   "description": {
-    "it": "Client MongoDB: connessioni con password nel vault, database e collezioni, documenti in Extended JSON, modifiche sempre confermate",
-    "en": "MongoDB client: connections with passwords in the vault, databases and collections, documents in Extended JSON, changes always confirmed"
+    "it": "Client MongoDB: connessioni con password nel vault, editor mongosh, documenti in JSON o tabella, modifiche sempre confermate, collezioni e indici, export JSON/CSV/script",
+    "en": "MongoDB client: connections with passwords in the vault, mongosh editor, documents as JSON or table, changes always confirmed, collections and indexes, JSON/CSV/script export"
   },
   "color": "#47a248",
   "icon": "🍃",
   "position": "tab",
   "order": 26,
   "dependencies": [
-    { "code": "tunnels", "required": false }
+    {
+      "code": "tunnels",
+      "required": false
+    }
   ],
-  "config": ["mongoConnections"],
+  "config": [
+    "mongoConnections",
+    "mongoFolders"
+  ],
   "export": [
     {
       "id": "connections",
-      "label": { "it": "Connessioni MongoDB", "en": "MongoDB connections" },
-      "description": { "it": "Connessioni e password cifrate (serve la stessa master password)", "en": "Connections and encrypted passwords (the same master password is needed)" },
-      "sections": ["mongoConnections", "vault"]
+      "label": {
+        "it": "Connessioni MongoDB",
+        "en": "MongoDB connections"
+      },
+      "description": {
+        "it": "Connessioni e password cifrate (serve la stessa master password)",
+        "en": "Connections and encrypted passwords (the same master password is needed)"
+      },
+      "sections": [
+        "mongoConnections",
+        "mongoFolders",
+        "vault"
+      ]
     }
   ],
   "backend": {
     "module": "server.js",
     "routes": [
-      { "method": "GET",    "path": "/connections",                                      "handler": "listConnections" },
-      { "method": "POST",   "path": "/connections",                                      "handler": "createConnection" },
-      { "method": "PUT",    "path": "/connections/:id",                                  "handler": "updateConnection" },
-      { "method": "DELETE", "path": "/connections/:id",                                  "handler": "deleteConnection" },
-      { "method": "POST",   "path": "/connections/:id/test",                             "handler": "testConnection" },
-      { "method": "GET",    "path": "/connections/:id/databases",                        "handler": "databases" },
-      { "method": "GET",    "path": "/connections/:id/databases/:db/collections",        "handler": "collections" },
-      { "method": "POST",   "path": "/connections/:id/databases/:db/collections/:coll/find",    "handler": "find" },
-      { "method": "POST",   "path": "/connections/:id/databases/:db/collections/:coll/count",   "handler": "count" },
-      { "method": "GET",    "path": "/connections/:id/databases/:db/collections/:coll/indexes", "handler": "indexes" },
-      { "method": "POST",   "path": "/connections/:id/databases/:db/collections/:coll/export",  "handler": "exportDocuments" },
-      { "method": "POST",   "path": "/connections/:id/operation",                        "handler": "operation" }
+      {
+        "method": "GET",
+        "path": "/connections",
+        "handler": "listConnections"
+      },
+      {
+        "method": "POST",
+        "path": "/connections",
+        "handler": "createConnection"
+      },
+      {
+        "method": "POST",
+        "path": "/connections/import",
+        "handler": "importConnections"
+      },
+      {
+        "method": "PUT",
+        "path": "/connections/:id",
+        "handler": "updateConnection"
+      },
+      {
+        "method": "DELETE",
+        "path": "/connections/:id",
+        "handler": "deleteConnection"
+      },
+      {
+        "method": "POST",
+        "path": "/connections/:id/test",
+        "handler": "testConnection"
+      },
+      {
+        "method": "POST",
+        "path": "/folders",
+        "handler": "createFolder"
+      },
+      {
+        "method": "PUT",
+        "path": "/folders/:id",
+        "handler": "updateFolder"
+      },
+      {
+        "method": "DELETE",
+        "path": "/folders/:id",
+        "handler": "deleteFolder"
+      },
+      {
+        "method": "GET",
+        "path": "/connections/:id/databases",
+        "handler": "databases"
+      },
+      {
+        "method": "GET",
+        "path": "/connections/:id/databases/:db/collections",
+        "handler": "collections"
+      },
+      {
+        "method": "POST",
+        "path": "/connections/:id/databases/:db/collections/:coll/find",
+        "handler": "find"
+      },
+      {
+        "method": "POST",
+        "path": "/connections/:id/databases/:db/collections/:coll/count",
+        "handler": "count"
+      },
+      {
+        "method": "GET",
+        "path": "/connections/:id/databases/:db/collections/:coll/indexes",
+        "handler": "indexes"
+      },
+      {
+        "method": "GET",
+        "path": "/connections/:id/databases/:db/collections/:coll/structure",
+        "handler": "structure"
+      },
+      {
+        "method": "POST",
+        "path": "/connections/:id/export",
+        "handler": "exportDocuments"
+      },
+      {
+        "method": "POST",
+        "path": "/connections/:id/shell",
+        "handler": "shell"
+      },
+      {
+        "method": "POST",
+        "path": "/connections/:id/operation",
+        "handler": "operation"
+      }
     ]
   },
   "mcp": {
     "tools": [
-      { "name": "connections", "handler": "connections", "readOnly": true,
+      {
+        "name": "connections",
+        "handler": "connections",
+        "readOnly": true,
         "description": "MongoDB connections configured in DevDock (no credentials). Requires the DevDock vault to be unlocked from its UI.",
-        "inputSchema": { "type": "object", "properties": {} } },
-      { "name": "databases", "handler": "databases", "readOnly": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "databases",
+        "handler": "databases",
+        "readOnly": true,
         "description": "Databases of a MongoDB connection.",
-        "inputSchema": { "type": "object", "properties": { "connection": { "type": "string" } }, "required": ["connection"] } },
-      { "name": "collections", "handler": "collections", "readOnly": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "connection": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "connection"
+          ]
+        }
+      },
+      {
+        "name": "collections",
+        "handler": "collections",
+        "readOnly": true,
         "description": "Collections of a MongoDB database with their estimated document count.",
-        "inputSchema": { "type": "object", "properties": { "connection": { "type": "string" }, "database": { "type": "string" } }, "required": ["connection", "database"] } },
-      { "name": "find", "handler": "find", "readOnly": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "connection": {
+              "type": "string"
+            },
+            "database": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "connection",
+            "database"
+          ]
+        }
+      },
+      {
+        "name": "find",
+        "handler": "find",
+        "readOnly": true,
         "description": "Documents of a collection matching a filter (MongoDB query as Extended JSON), with optional sort and projection, at most 100 per call. Documents are returned as relaxed Extended JSON.",
-        "inputSchema": { "type": "object", "properties": {
-          "connection": { "type": "string" }, "database": { "type": "string" }, "collection": { "type": "string" },
-          "filter": { "type": "object", "description": "Query, e.g. {\"status\": \"active\", \"_id\": {\"$oid\": \"…\"}}" },
-          "sort": { "type": "object" }, "projection": { "type": "object" },
-          "limit": { "type": "integer", "minimum": 1, "maximum": 100 } }, "required": ["connection", "database", "collection"] } },
-      { "name": "count", "handler": "count", "readOnly": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "connection": {
+              "type": "string"
+            },
+            "database": {
+              "type": "string"
+            },
+            "collection": {
+              "type": "string"
+            },
+            "filter": {
+              "type": "object",
+              "description": "Query, e.g. {\"status\": \"active\", \"_id\": {\"$oid\": \"…\"}}"
+            },
+            "sort": {
+              "type": "object"
+            },
+            "projection": {
+              "type": "object"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "connection",
+            "database",
+            "collection"
+          ]
+        }
+      },
+      {
+        "name": "count",
+        "handler": "count",
+        "readOnly": true,
         "description": "Number of documents of a collection matching a filter (MongoDB query as Extended JSON).",
-        "inputSchema": { "type": "object", "properties": {
-          "connection": { "type": "string" }, "database": { "type": "string" }, "collection": { "type": "string" },
-          "filter": { "type": "object" } }, "required": ["connection", "database", "collection"] } }
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "connection": {
+              "type": "string"
+            },
+            "database": {
+              "type": "string"
+            },
+            "collection": {
+              "type": "string"
+            },
+            "filter": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "connection",
+            "database",
+            "collection"
+          ]
+        }
+      },
+      {
+        "name": "aggregate",
+        "handler": "aggregate",
+        "readOnly": true,
+        "description": "Runs a read-only aggregation pipeline (Extended JSON stages; $out and $merge are refused) on a collection, at most 100 documents per call.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "connection": {
+              "type": "string"
+            },
+            "database": {
+              "type": "string"
+            },
+            "collection": {
+              "type": "string"
+            },
+            "pipeline": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "Stages, e.g. [{\"$match\": {\"status\": \"active\"}}, {\"$group\": {\"_id\": \"$country\", \"n\": {\"$sum\": 1}}}]"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "connection",
+            "database",
+            "collection",
+            "pipeline"
+          ]
+        }
+      }
     ]
   },
   "frontend": {

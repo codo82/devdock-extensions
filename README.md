@@ -6,7 +6,7 @@ Official extensions for [DevDock](https://github.com/codo82/devdock), the local 
 |---|---|---|
 | ⚙️ PM2 | [`pm2`](pm2) | PM2 processes: list, start/stop/restart/delete, streaming logs; npm scripts started under PM2 from the NPM section |
 | 🔌 Ports | [`ports`](ports) | Listening TCP ports with their process, linked to what DevDock started (npm, PM2, tunnels); stop of the process that holds a port |
-| 🍃 MongoDB | [`mongo-client`](mongo-client) | MongoDB client: connections (host, URI or SSH tunnel) with passwords in the DevDock vault, databases and collections, documents in Extended JSON with filter, sort and projection, confirmed inserts, edits and deletes, JSON export, read-only MCP tools |
+| 🍃 MongoDB | [`mongo-client`](mongo-client) | MongoDB client with the features of the DevDock Database section: connections (host, URI or SSH tunnel) in folders with passwords in the DevDock vault, mongosh editor with history, documents as JSON or table with inline edit, every change shown and confirmed, collections and indexes designer, structure, export as JSON/CSV/script, read-only MCP tools |
 
 PM2 and Ports were built into DevDock up to 1.23. All of them require DevDock 2.0 or later.
 

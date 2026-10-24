@@ -43,7 +43,13 @@ function shell(v, indent = '') {
   if (v && v._bsontype === 'ObjectId') return `ObjectId(${JSON.stringify(v.toHexString())})`;
   if (v && v._bsontype === 'Decimal128') return `NumberDecimal(${JSON.stringify(v.toString())})`;
   if (v && v._bsontype === 'Long') return `NumberLong(${JSON.stringify(v.toString())})`;
-  if (v && v._bsontype === 'Binary') return `BinData(${v.sub_type}, ${JSON.stringify(v.toString('base64'))})`;
+  if (v && v._bsontype === 'Binary') return v.sub_type === 4 && v.buffer.length === 16 ? `UUID(${JSON.stringify(v.toUUID().toHexString())})` : `BinData(${v.sub_type}, ${JSON.stringify(v.toString('base64'))})`;
+  if (v && v._bsontype === 'BSONRegExp') return `/${v.pattern}/${v.options}`;
+  if (v instanceof RegExp) return `/${v.source}/${v.flags}`;
+  if (v && v._bsontype === 'Timestamp') return `Timestamp(${v.t}, ${v.i})`;
+  if (v && v._bsontype === 'MinKey') return 'MinKey()';
+  if (v && v._bsontype === 'MaxKey') return 'MaxKey()';
+  if (v === undefined) return 'undefined';
   if (v && v._bsontype === 'Int32' || v && v._bsontype === 'Double') return String(v.valueOf());
   if (Array.isArray(v)) return v.length ? `[ ${v.map(x => shell(x, indent)).join(', ')} ]` : '[]';
   if (v && typeof v === 'object' && !v._bsontype) {
