@@ -45,6 +45,19 @@
       "devdock": "^2.0",
       "repo": "https://github.com/codo82/devdock-extensions.git",
       "path": "ports"
+    },
+    {
+      "code": "swagger",
+      "name": "Swagger",
+      "description": {
+        "it": "Anteprima di specifiche OpenAPI (.yaml/.json) caricate dal disco",
+        "en": "Preview of OpenAPI specifications (.yaml/.json) loaded from disk"
+      },
+      "icon": "📄",
+      "version": "1.0.0",
+      "devdock": "^2.0",
+      "repo": "https://github.com/codo82/devdock-extensions.git",
+      "path": "swagger"
     }
   ]
 }

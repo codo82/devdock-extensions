@@ -1,0 +1,11 @@
+# Changelog
+
+All notable changes to the `swagger` extension. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/); releases are tagged `swagger@<version>`.
+
+## [Unreleased]
+
+## [1.0.0] - 2026-10-24
+
+### Changed
+- Moved out of DevDock, where it was a built-in extension up to 2.0: same features (preview of an OpenAPI `.yaml`/`.json` file loaded from disk, with Swagger UI from the CDN).
+- Requires DevDock 2.0 or later (`"devdock": "^2.0"`); install it from the DevDock Extensions panel (🧩) or with `npm run ext -- install swagger`.
