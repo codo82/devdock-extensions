@@ -4,6 +4,8 @@ All notable changes to the `mongo-client` extension. The format follows [Keep a 
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-24
+
 ### Changed
 - The whole section needs the DevDock master password, like the Database section: while the vault is locked (or not created yet) the sidebar shows *Unlock*, connections and folders cannot be listed, added or imported, and every route answers `423`.
 

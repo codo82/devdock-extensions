@@ -4,7 +4,7 @@
     "en": "MongoDB"
   },
   "code": "mongo-client",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "devdock": "^2.0",
   "description": {
     "it": "Client MongoDB: connessioni con password nel vault, editor mongosh, documenti in JSON o tabella, modifiche sempre confermate, collezioni e indici, export JSON/CSV/script",
