@@ -2,6 +2,8 @@
   "sidebar.title": "MongoDB",
   "sidebar.add": "Nuova connessione",
   "sidebar.none": "Nessuna connessione: aggiungine una con +. Le password restano cifrate con la master password di DevDock.",
+  "sidebar.locked": "🔒 Le connessioni MongoDB sono protette dalla master password di DevDock: sbloccala (o creala) per vederle e aggiungerne.",
+  "sidebar.unlock": "Sblocca",
   "tree.loading": "Caricamento…",
   "tree.none": "Vuoto",
   "tree.actions": "Azioni",

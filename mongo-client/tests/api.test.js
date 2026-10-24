@@ -16,12 +16,15 @@ after(async () => { await mcp?.close(); await srv?.stop(); });
 const api = (method, p, body) => srv.request(method, `${p.startsWith('/vault') ? '/api/core' : '/api/ext/mongo-client'}${p}`, { body });
 
 test('connessioni: password cifrata nel vault, mai in chiaro né restituita', async () => {
-  assert.deepEqual((await api('GET', '/connections')).json.connections, []);
-  // senza vault la password non si può salvare
-  let r = await api('POST', '/connections', { id: 'loc', label: 'Locale', host: '127.0.0.1', port: 27017, user: 'app', password: 'segreta-mongo' });
+  // senza master password la sezione non si usa: né elenco né connessioni, anche senza password
+  let r = await api('GET', '/connections');
+  assert.deepEqual([r.status, r.json.code], [423, 'core.vault_missing']);
+  r = await api('POST', '/connections', { id: 'nopwd', label: 'Senza password', host: '127.0.0.1', port: 27017 });
+  assert.deepEqual([r.status, r.json.code], [423, 'core.vault_missing']);
+  r = await api('POST', '/folders', { label: 'Cartella' });
   assert.equal(r.status, 423);
-  assert.equal(r.json.code, 'core.vault_missing');
   assert.equal((await api('POST', '/vault/init', { password: 'master-password-mongo' })).status, 200);
+  assert.deepEqual((await api('GET', '/connections')).json.connections, []);
   r = await api('POST', '/connections', { id: 'loc', label: 'Locale', host: '127.0.0.1', port: 27017, user: 'app', password: 'segreta-mongo' });
   assert.equal(r.status, 200);
   assert.equal(r.json.hasPassword, true);
@@ -102,6 +105,10 @@ test('MCP: niente con il vault bloccato, nessuna credenziale', async () => {
   assert.equal(r.structuredContent.code, 'mongo-client.mcp_vault_locked');
   r = await call('mongo_client_find', { connection: 'rw', database: 'app', collection: 'users' });
   assert.equal(r.structuredContent.code, 'mongo-client.mcp_vault_locked');
+  // anche l'interfaccia: tutto richiede di nuovo la master password
+  r = await api('GET', '/connections');
+  assert.deepEqual([r.status, r.json.code], [423, 'core.vault_locked']);
+  assert.equal((await api('POST', '/vault/unlock', { password: 'master-password-mongo' })).status, 200);
 });
 
 test('cartelle: create, connessione spostata dentro, eliminazione che la riporta nella radice', async () => {
@@ -177,7 +184,6 @@ test('import: connessioni di un altro DevDock con un\'altra master password, ri-
     const folder = other.readConfig().mongoFolders[0].id;
     await other.request('POST', '/api/ext/mongo-client/connections', { body: { id: 'remoto', label: 'Remoto', host: 'mongo.example.invalid', port: 27017, user: 'app', password: 'segreta-remota', folder } });
     const file = other.readConfig();
-    await api('POST', '/vault/unlock', { password: 'master-password-mongo' });
     let r = await api('POST', '/connections/import', { config: file, password: 'sbagliata', mode: 'merge' });
     assert.equal(r.status, 401);
     assert.equal(r.json.code, 'mongo-client.wrong_file_password');

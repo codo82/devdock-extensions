@@ -210,6 +210,9 @@ export default {
     const { t } = ctx;
     const $ = (root, role) => root.querySelector(`[data-role="${role}"]`);
     const byId = id => document.getElementById(id);
+    // contenitori ridisegnati: niente se l'HTML non cambia, rimandato a dopo un clic in corso
+    // (DevDock ≥ 2.3); con versioni precedenti un semplice innerHTML
+    const patch = ctx.ui.patch || ((el, html) => { el.innerHTML = html; });
 
     let connections = [];
     let folders = [];
@@ -224,6 +227,7 @@ export default {
     const activeDb = new Map();  // database attivo per connessione
     const panels = new Map();    // risultati mostrati per connessione (vedi renderResults)
     let running = false;
+    let locked = false;          // vault della master password bloccato o da creare
 
     const conn = id => connections.find(c => c.id === id) || null;
     const active = () => conn(activeId);
@@ -259,7 +263,14 @@ export default {
         ({ connections, folders, tunnelsAvailable } = r);
         pageSizes = r.pageSizes || pageSizes;
         resultLimits = r.resultLimits || resultLimits;
-      } catch (e) { toast(e.message, 'error'); connections = []; folders = []; }
+        locked = false;
+      } catch (e) {
+        if (!ctx.vault.isVaultError(e)) toast(e.message, 'error');
+        locked = ctx.vault.isVaultError(e);
+        connections = []; folders = []; activeId = null;
+      }
+      for (const b of ctx.sidebar.querySelectorAll('[data-action="add-folder"],[data-action="add-connection"],[data-action="import-connections"]')) b.hidden = locked;
+      $(ctx.sidebar, 'tree-filter').hidden = locked;
       for (const k of [...open]) if (!conn(k.split('|')[1])) open.delete(k);
       if (activeId && !active()) activeId = null;
       ctx.setBadge(connections.length || null);
@@ -351,7 +362,8 @@ export default {
 
     function renderTree() {
       const el = $(ctx.sidebar, 'tree');
-      if (!connections.length && !folders.length) { el.innerHTML = `<p class="mg-muted mg-pad">${esc(t('sidebar.none'))}</p>`; return; }
+      if (locked) { patch(el, `<p class="mg-muted mg-pad">${esc(t('sidebar.locked'))}<br><br><button class="btn btn-primary btn-sm" onclick="${EXT}.unlock()">${esc(t('sidebar.unlock'))}</button></p>`); return; }
+      if (!connections.length && !folders.length) { patch(el, `<p class="mg-muted mg-pad">${esc(t('sidebar.none'))}</p>`); return; }
       const closed = closedFolders();
       const known = new Set(folders.map(f => f.id));
       const folderNode = f => {
@@ -367,7 +379,7 @@ export default {
           ${isOpen ? `<div class="mg-children">${list.map(connNode).join('')}</div>` : ''}`;
       };
       const html = folders.map(folderNode).join('') + connections.filter(c => (!c.folder || !known.has(c.folder)) && connVisible(c)).map(connNode).join('');
-      el.innerHTML = html || `<p class="mg-muted mg-pad">${esc(t('tree.noMatch'))}</p>`;
+      patch(el, html || `<p class="mg-muted mg-pad">${esc(t('tree.noMatch'))}</p>`);
     }
 
     function toggle(key) {
@@ -515,6 +527,7 @@ export default {
     function renderWorkspace() {
       const c = active();
       $(ctx.root, 'empty').hidden = !!c;
+      $(ctx.root, 'empty').querySelector('p').textContent = t(locked ? 'sidebar.locked' : 'main.empty');
       $(ctx.root, 'workspace').hidden = !c;
       if (!c) return;
       if (!activeDb.has(c.id) && c.database) activeDb.set(c.id, c.database);
@@ -846,25 +859,24 @@ export default {
       const el = $(ctx.root, 'results');
       const p = panel(), c = active();
       if (!c) return;
-      if (!p) { el.innerHTML = `<div class="mg-muted mg-pad">${esc(t('result.hint'))}</div>`; return; }
-      if (p.mode === 'structure') { el.innerHTML = structureHtml(p, c); return; }
-      if (p.loading) { el.innerHTML = `<div class="mg-muted mg-pad">${esc(t('result.running'))}</div>`; return; }
-      if (p.mode === 'browse') { el.innerHTML = browseHtml(p, c); bindDocs(p); return; }
+      if (!p) { patch(el, `<div class="mg-muted mg-pad">${esc(t('result.hint'))}</div>`); return; }
+      if (p.mode === 'structure') { patch(el, structureHtml(p, c)); return; }
+      if (p.loading) { patch(el, `<div class="mg-muted mg-pad">${esc(t('result.running'))}</div>`); return; }
+      if (p.mode === 'browse') { patch(el, browseHtml(p, c)); return; }
       // risultato dell'editor
-      if (p.error) { el.innerHTML = `<div class="mg-error">${esc(p.error)}</div>`; return; }
+      if (p.error) { patch(el, `<div class="mg-error">${esc(p.error)}</div>`); return; }
       const r = p.result;
-      if (!r) { el.innerHTML = ''; return; }
+      if (!r) { patch(el, ''); return; }
       const meta = `<span>${esc(r.kind === 'documents' ? (r.truncated ? t('result.truncated', { count: r.documents.length }) : t('result.documents', { count: r.documents.length })) : r.kind === 'use' ? t('result.use', { database: r.database }) : r.kind === 'write' ? t('result.written') : t('result.value'))}</span>
         <span class="mg-muted">${esc(t('docs.ms', { ms: fmt.number(r.ms ?? 0) }))}</span>`;
       if (r.kind === 'documents') {
-        el.innerHTML = `<div class="mg-bar">${meta}${viewToggle(p)}${pendingBar(p, c)}</div>${docsHtml(p, c, r.documents, shellTarget(p))}`;
-        bindDocs(p);
+        patch(el, `<div class="mg-bar">${meta}${viewToggle(p)}${pendingBar(p, c)}</div>${docsHtml(p, c, r.documents, shellTarget(p))}`);
       } else if (r.kind === 'use') {
-        el.innerHTML = `<div class="mg-bar">${meta}</div>`;
+        patch(el, `<div class="mg-bar">${meta}</div>`);
       } else {
         const value = r.kind === 'write' ? r.result : r.value;
-        el.innerHTML = `<div class="mg-bar">${meta}${r.truncated ? `<span class="mg-badge">${esc(t('result.valueTruncated'))}</span>` : ''}</div>
-          <div class="mg-docs"><pre class="mg-json mg-value">${renderValue(value, esc)}</pre></div>`;
+        patch(el, `<div class="mg-bar">${meta}${r.truncated ? `<span class="mg-badge">${esc(t('result.valueTruncated'))}</span>` : ''}</div>
+          <div class="mg-docs"><pre class="mg-json mg-value">${renderValue(value, esc)}</pre></div>`);
       }
     }
 
@@ -941,14 +953,12 @@ export default {
     }
     const safeJson = text => { try { return text ? JSON.parse(text) : null; } catch { return null; } };
 
-    function bindDocs(p) {
-      const table = ctx.root.querySelector('.mg-table');
-      if (!table) return;
-      table.addEventListener('dblclick', e => {
-        const td = e.target.closest('td[data-cell]');
-        if (td) editCell(p, td);
-      });
-    }
+    // doppio clic su una cella della tabella dei documenti (un solo listener sul contenitore)
+    $(ctx.root, 'results').addEventListener('dblclick', e => {
+      const td = e.target.closest('td[data-cell]');
+      const p = panel();
+      if (td && p && (p.mode === 'browse' || p.mode === 'shell')) editCell(p, td);
+    });
 
     // Modifica di una cella: testo per le stringhe, JSON per il resto; oggetti e array nel dialogo
     function editCell(p, td) {
@@ -1448,7 +1458,7 @@ export default {
     const actions = {
       'add-connection': () => connectionDialog(null),
       'add-folder': () => folderDialog(null),
-      'vault-menu': vaultMenu,
+      'vault-menu': () => (locked ? unlock() : vaultMenu()),
       'import-connections': importDialog,
       'run': () => runShell(),
       'export-shell': e => exportShell(e.target.closest('button')),
@@ -1468,8 +1478,11 @@ export default {
     });
     $(ctx.sidebar, 'tree-filter').addEventListener('input', e => { treeFilter = e.target.value.trim().toLowerCase(); renderTree(); });
 
+    // master password chiesta (o creata) dal dialogo del core, poi la sezione si carica
+    async function unlock() { if (await ctx.vault.ensure()) load(); }
+
     ctx.expose({
-      toggle, toggleFolder, folderMenu, saveFolder, connMenu, dbMenu, collMenu, selectConnection, selectDatabase,
+      unlock, toggle, toggleFolder, folderMenu, saveFolder, connMenu, dbMenu, collMenu, selectConnection, selectDatabase,
       openCollection, openStructure, connectionDialog, formMode, saveConnection, testConnection, deleteConnection,
       saveVault, lockVault, doImport, useHistory,
       clearHistory() { try { sessionStorage.removeItem(HISTORY_KEY); } catch { /* niente da togliere */ } closeModal(); },
@@ -1537,6 +1550,7 @@ export default {
     };
     this.languageChanged = () => { renderTree(); renderWorkspace(); };
     this.unmount = () => ac.element.remove();
+    this.show = () => { if (locked) load(); }; // sbloccato nel frattempo da un'altra sezione
     await load();
   },
 };

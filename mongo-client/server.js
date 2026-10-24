@@ -588,10 +588,15 @@ module.exports = function createMongoClient(ctx) {
     return label;
   };
 
+  // Tutta la sezione richiede il vault sbloccato, come il client database: connessioni, cartelle
+  // e dati (423 del core: da sbloccare o da creare); gli strumenti MCP lo controllano a parte
+  const requireVault = () => { if (vault.state() !== 'unlocked') vault.encrypt(''); };
+  const guarded = handlers => Object.fromEntries(Object.entries(handlers).map(([name, fn]) => [name, (req, res) => { requireVault(); return fn(req, res); }]));
+
   return {
     config,
 
-    handlers: {
+    handlers: guarded({
       listConnections(req, res) {
         res.json({ connections: connections().map(publicConnection), folders: folders(), tunnelsAvailable: !!tunnels, pageSizes: PAGE_SIZES, resultLimits: RESULT_LIMITS });
       },
@@ -772,7 +777,7 @@ module.exports = function createMongoClient(ctx) {
         checkToken(req.body.token, p.token);
         res.json({ ok: true, ...(await execute(c, p.op)) });
       },
-    },
+    }),
 
     // Strumenti MCP: solo letture e solo con il vault sbloccato dall'interfaccia
     mcp: {

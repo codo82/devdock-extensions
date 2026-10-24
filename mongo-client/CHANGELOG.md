@@ -4,6 +4,12 @@ All notable changes to the `mongo-client` extension. The format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+- The whole section needs the DevDock master password, like the Database section: while the vault is locked (or not created yet) the sidebar shows *Unlock*, connections and folders cannot be listed, added or imported, and every route answers `423`.
+
+### Fixed
+- Clicks lost on the buttons of the results (Save of the edited cells, pages, view switch) when a cell being edited lost the focus: the results are redrawn with DevDock's `ctx.ui.patch` (DevDock 2.3; a plain redraw with older versions), and the double click on cells is handled once on the container.
+
 ## [1.1.0] - 2026-10-24
 
 ### Added

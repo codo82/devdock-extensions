@@ -2,6 +2,8 @@
   "sidebar.title": "MongoDB",
   "sidebar.add": "New connection",
   "sidebar.none": "No connections: add one with +. Passwords stay encrypted with the DevDock master password.",
+  "sidebar.locked": "🔒 MongoDB connections are protected by the DevDock master password: unlock it (or create it) to see and add them.",
+  "sidebar.unlock": "Unlock",
   "tree.loading": "Loading…",
   "tree.none": "Empty",
   "tree.actions": "Actions",
