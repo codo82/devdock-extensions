@@ -1,0 +1,16 @@
+{
+  "name": "devdock-extensions",
+  "private": true,
+  "description": "Official DevDock extensions and catalog: one folder per extension, installable from the DevDock Extensions panel",
+  "scripts": {
+    "test": "node --test",
+    "catalog": "node scripts/catalog.js",
+    "release": "node scripts/release.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "devdock": "github:codo82/devdock#main"
+  }
+}
