@@ -4,6 +4,8 @@ All notable changes to the `mongo-client` extension. The format follows [Keep a 
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-24
+
 ### Added
 - Same features as DevDock's Database section (DB client):
   - **Sidebar**: connections grouped in folders (`mongoFolders`, one level: 📁+, rename and delete from ⋯ or right click, Folder field of the connection), tree filter on connections, databases and collections, master password menu (🔒: change, automatic lock, lock now), import of connections from a file exported with another master password (⤒, passwords re-encrypted with yours).
