@@ -4,6 +4,8 @@ All notable changes to the `notes` extension. The format follows [Keep a Changel
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-27
+
 ### Added
 - **Completion of the lists**: the head of each list shows the percentage of done items (with *3 of 4 done* as tooltip) and a progress bar under it.
 - **Note titles**: each note has an optional title above its text (Enter moves to the text), saved automatically with it.
