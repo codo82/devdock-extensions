@@ -9,7 +9,6 @@
   "locked.text": "Note e to-do sono cifrati con la master password: sblocca il vault per vederli.",
   "locked.unlock": "🔓 Sblocca",
   "locked.still": "Il vault è ancora bloccato",
-  "board.summary": "{open} da fare su {items} · {notes} note",
   "lists.title": "To-do",
   "lists.add": "＋ Lista",
   "lists.none": "Nessuna lista: creane una con ＋ Lista.",
@@ -70,5 +69,12 @@
   "errors.too_many_notes": "Al massimo {max} note per bacheca",
   "errors.done_invalid": "Stato della voce non valido",
   "errors.color_invalid": "Colore non valido",
-  "errors.note_changed": "La nota è stata modificata altrove nel frattempo"
+  "errors.note_changed": "La nota è stata modificata altrove nel frattempo",
+  "notes.resize": "Trascina per ridimensionare la nota (larghezza in colonne e altezza); doppio clic: dimensione normale",
+  "errors.size_invalid": "Dimensione della nota non valida",
+  "board.items": "{open} da fare su {items}",
+  "board.notes": {
+    "one": "{count} nota",
+    "other": "{count} note"
+  }
 }

@@ -9,7 +9,6 @@
   "locked.text": "Notes and to-dos are encrypted with the master password: unlock the vault to see them.",
   "locked.unlock": "🔓 Unlock",
   "locked.still": "The vault is still locked",
-  "board.summary": "{open} to do of {items} · {notes} notes",
   "lists.title": "To-do",
   "lists.add": "＋ List",
   "lists.none": "No lists: create one with ＋ List.",
@@ -70,5 +69,12 @@
   "errors.too_many_notes": "At most {max} notes per board",
   "errors.done_invalid": "Invalid item state",
   "errors.color_invalid": "Invalid colour",
-  "errors.note_changed": "The note was changed elsewhere in the meantime"
+  "errors.note_changed": "The note was changed elsewhere in the meantime",
+  "notes.resize": "Drag to resize the note (width in columns and height); double click: normal size",
+  "errors.size_invalid": "Invalid note size",
+  "board.items": "{open} to do of {items}",
+  "board.notes": {
+    "one": "{count} note",
+    "other": "{count} notes"
+  }
 }

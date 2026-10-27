@@ -70,6 +70,12 @@ test('note: colore, salvataggio, modifica concorrente rifiutata; bacheca vuota t
   r = await api('PUT', `${G}/notes/${note.id}`, { text: 'vecchia', updatedAt: note.updatedAt });
   assert.deepEqual([r.status, r.json.code], [409, 'notes.note_changed']);
   assert.equal((await api('PUT', `${G}/notes/${note.id}`, { color: 'rosso' })).json.code, 'notes.color_invalid');
+  // dimensioni: colonne e altezza, poi di nuovo normali
+  r = await api('PUT', `${G}/notes/${note.id}`, { w: 2, h: 300 });
+  assert.deepEqual([r.json.notes[0].w, r.json.notes[0].h], [2, 300]);
+  for (const size of [{ w: 4 }, { w: 0 }, { h: 20 }, { h: '300' }]) assert.equal((await api('PUT', `${G}/notes/${note.id}`, size)).json.code, 'notes.size_invalid');
+  r = await api('PUT', `${G}/notes/${note.id}`, { w: 1, h: null });
+  assert.deepEqual([r.json.notes[0].w, r.json.notes[0].h], [undefined, undefined]);
   assert.doesNotMatch(JSON.stringify(srv.readConfig()), /wifi/);
 
   r = await api('DELETE', `${G}/notes/${note.id}`);

@@ -105,7 +105,11 @@ export default {
     function renderSummary() {
       if (!board) return;
       const c = board.counts;
-      $(ctx.root, 'summary').textContent = c.items || c.notes ? t('board.summary', { open: fmt.number(c.open), items: fmt.number(c.items), notes: fmt.number(c.notes) }) : '';
+      const parts = [
+        ...(c.items ? [t('board.items', { open: fmt.number(c.open), items: fmt.number(c.items) })] : []),
+        ...(c.notes ? [t('board.notes', { count: c.notes })] : []),
+      ];
+      $(ctx.root, 'summary').textContent = parts.join(' · ');
     }
 
     function renderBoard() {
@@ -150,17 +154,84 @@ export default {
     function renderNotes() {
       flushNotes();
       const el = $(ctx.root, 'notes');
-      el.innerHTML = board.notes.length ? board.notes.map(n => `<div class="nt-note nt-c-${esc(n.color)}" data-note="${esc(n.id)}">
-          <textarea maxlength="10000" placeholder="${esc(t('notes.placeholder'))}" aria-label="${esc(t('notes.text'))}" data-note-text>${esc(n.text)}</textarea>
+      el.innerHTML = board.notes.length ? board.notes.map(n => `<div class="nt-note nt-c-${esc(n.color)}" data-note="${esc(n.id)}" data-w="${n.w || 1}">
+          <textarea maxlength="10000" placeholder="${esc(t('notes.placeholder'))}" aria-label="${esc(t('notes.text'))}" data-note-text ${n.h ? `data-h="${Number(n.h)}"` : ''}>${esc(n.text)}</textarea>
           <footer>
             ${COLORS.map(c => `<button class="nt-dot nt-c-${c} ${c === n.color ? 'active' : ''}" data-color="${c}" title="${esc(t(`colors.${c}`))}" aria-label="${esc(t(`colors.${c}`))}"></button>`).join('')}
             <span class="nt-saved" data-saved>${n.updatedAt ? esc(fmt.relative(n.updatedAt)) : ''}</span>
             <button class="nt-del" data-del-note title="${esc(t('core.action.delete'))}">✕</button>
-          </footer></div>`).join('') : `<p class="nt-empty">${esc(t('notes.none'))}</p>`;
+          </footer>
+          <span class="nt-resize" data-resize title="${esc(t('notes.resize'))}"></span></div>`).join('') : `<p class="nt-empty">${esc(t('notes.none'))}</p>`;
       for (const ta of el.querySelectorAll('textarea')) grow(ta);
+      fitWidths();
     }
 
-    const grow = ta => { ta.style.height = 'auto'; ta.style.height = `${Math.max(110, ta.scrollHeight)}px`; };
+    // Altezza del testo: quella scelta trascinando, altrimenti secondo il contenuto
+    const grow = ta => {
+      if (ta.dataset.h) { ta.style.height = `${ta.dataset.h}px`; return; }
+      ta.style.height = 'auto';
+      ta.style.height = `${Math.max(110, ta.scrollHeight)}px`;
+    };
+
+    // Colonne della griglia delle note, dalla sua larghezza (come auto-fill di minmax(NOTE_MIN, 1fr)):
+    // quelle calcolate dal browser contano anche le colonne in più create da una nota larga
+    const NOTE_MIN = 220;
+    const gridGap = () => parseFloat(getComputedStyle($(ctx.root, 'notes')).columnGap) || 0;
+    const columns = () => Math.max(1, Math.floor(($(ctx.root, 'notes').clientWidth + gridGap()) / (NOTE_MIN + gridGap())));
+    // Larghezza di ogni nota: le sue colonne, al massimo quelle disponibili
+    function fitWidths() {
+      const cols = columns();
+      for (const el of ctx.root.querySelectorAll('[data-note]')) el.style.gridColumn = `span ${Math.min(Number(el.dataset.w) || 1, cols)}`;
+    }
+    new ResizeObserver(() => fitWidths()).observe($(ctx.root, 'notes'));
+
+    // ---- note: ridimensionamento dall'angolo (colonne e altezza), doppio clic per tornare normale ----
+
+    function saveSize(noteEl, size) {
+      const id = noteEl.dataset.note;
+      clearTimeout(pending.get(id)); pending.delete(id);
+      const n = board.notes.find(x => x.id === id);
+      const text = noteEl.querySelector('textarea').value;
+      call(api => api.put(url(active, 'notes', id), { ...size, text, updatedAt: n.updatedAt })).then(r => r && renderNotes());
+    }
+
+    ctx.root.addEventListener('pointerdown', e => {
+      const handle = e.target.closest('[data-resize]');
+      if (!handle) return;
+      e.preventDefault();
+      const noteEl = handle.closest('[data-note]');
+      const ta = noteEl.querySelector('textarea');
+      const grid = $(ctx.root, 'notes');
+      const cols = columns();
+      const gap = gridGap();
+      const step = (grid.clientWidth + gap) / cols; // larghezza di una colonna con il suo spazio
+      const start = { x: e.clientX, y: e.clientY, w: Math.min(Number(noteEl.dataset.w) || 1, cols), h: ta.offsetHeight };
+      let size = { w: start.w, h: start.h };
+      handle.setPointerCapture(e.pointerId);
+      noteEl.classList.add('resizing');
+      const move = ev => {
+        size = {
+          w: Math.max(1, Math.min(3, cols, Math.round((start.w * step + ev.clientX - start.x) / step))),
+          h: Math.round(Math.max(80, Math.min(1200, start.h + ev.clientY - start.y))),
+        };
+        noteEl.dataset.w = size.w;
+        noteEl.style.gridColumn = `span ${size.w}`;
+        ta.dataset.h = size.h;
+        ta.style.height = `${size.h}px`;
+      };
+      const up = () => {
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', up);
+        noteEl.classList.remove('resizing');
+        if (size.w !== start.w || size.h !== start.h) saveSize(noteEl, size);
+      };
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', up);
+    });
+    ctx.root.addEventListener('dblclick', e => {
+      const handle = e.target.closest('[data-resize]');
+      if (handle) saveSize(handle.closest('[data-note]'), { w: 1, h: null });
+    });
 
     // ---- note: salvataggio automatico ----
 

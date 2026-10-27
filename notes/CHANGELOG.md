@@ -4,6 +4,12 @@ All notable changes to the `notes` extension. The format follows [Keep a Changel
 
 ## [Unreleased]
 
+### Added
+- **Resizable notes**: drag the bottom-right corner of a note to make it wider (1 to 3 columns of the grid, never more than the panel has) and taller or shorter; the size is saved with the note (encrypted like the rest) and a double click on the corner brings it back to the normal size.
+
+### Fixed
+- The summary next to the board name no longer says "0 to do of 0" when the board has only notes.
+
 ## [1.0.0] - 2026-10-27
 
 ### Added

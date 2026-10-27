@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const GENERAL = '@general';           // bacheca non legata a un progetto
 const COLORS = ['yellow', 'green', 'blue', 'pink', 'purple', 'gray'];
 const LIMITS = { lists: 50, items: 500, notes: 200, title: 200, item: 1000, note: 10000 };
+const SIZE = { maxColumns: 3, minHeight: 80, maxHeight: 1200 }; // dimensioni di una nota: colonne della griglia, altezza del testo (px)
 
 module.exports = function createNotes(ctx) {
   const { KEY_RE } = ctx.lib.validate;
@@ -61,6 +62,7 @@ module.exports = function createNotes(ctx) {
       })),
       notes: (Array.isArray(data?.notes) ? data.notes : []).map(n => ({
         id: String(n.id), text: String(n.text || ''), color: COLORS.includes(n.color) ? n.color : COLORS[0], updatedAt: String(n.updatedAt || ''),
+        ...(validWidth(n.w) && n.w > 1 ? { w: n.w } : {}), ...(validHeight(n.h) ? { h: n.h } : {}),
       })),
     };
   }
@@ -71,6 +73,9 @@ module.exports = function createNotes(ctx) {
     const isEmpty = !data.lists.length && !data.notes.length;
     ctx.config.set('notesBoards', isEmpty ? rest : [...rest, { board: boardId, box: vault.encrypt(JSON.stringify(data)) }]);
   }
+
+  const validWidth = w => Number.isInteger(w) && w >= 1 && w <= SIZE.maxColumns;
+  const validHeight = h => Number.isInteger(h) && h >= SIZE.minHeight && h <= SIZE.maxHeight;
 
   const counts = data => {
     const items = data.lists.flatMap(l => l.items);
@@ -178,6 +183,15 @@ module.exports = function createNotes(ctx) {
         if (body.color !== undefined) {
           if (!COLORS.includes(body.color)) throw ctx.error(400, 'color_invalid');
           note.color = body.color;
+        }
+        // dimensioni: w colonne (1 = normale), h altezza del testo (null = secondo il contenuto)
+        if (body.w !== undefined) {
+          if (!validWidth(body.w)) throw ctx.error(400, 'size_invalid');
+          if (body.w > 1) note.w = body.w; else delete note.w;
+        }
+        if (body.h !== undefined) {
+          if (body.h !== null && !validHeight(body.h)) throw ctx.error(400, 'size_invalid');
+          if (body.h === null) delete note.h; else note.h = body.h;
         }
         note.updatedAt = new Date().toISOString();
       }),

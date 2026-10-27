@@ -32,8 +32,8 @@
 
 .nt-notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;align-items:start}
 .nt-note{--bg-note:#3a3420;--fg-note:#f2e6b3;background:var(--bg-note);border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;flex-direction:column;min-height:140px}
-.nt-note textarea{flex:1;min-height:110px;background:none;border:none;resize:none;color:var(--fg-note);font-family:var(--sans);font-size:13px;line-height:1.5;padding:10px 12px;outline:none}
-.nt-note footer{display:flex;align-items:center;gap:4px;padding:4px 6px 6px 10px}
+.nt-note textarea{flex:1 0 auto;min-height:80px;background:none;border:none;resize:none;color:var(--fg-note);font-family:var(--sans);font-size:13px;line-height:1.5;padding:10px 12px;outline:none}
+.nt-note footer{display:flex;align-items:center;gap:4px;padding:4px 18px 6px 10px}
 .nt-note .nt-del{opacity:.6;color:var(--fg-note)}
 .nt-note:hover .nt-del{opacity:1}
 .nt-saved{font-size:10px;color:var(--fg-note);opacity:.6;margin-inline-start:auto}
@@ -48,3 +48,10 @@
 .sb-item .nt-open{margin-inline-start:auto}
 .nt-sb-sep{padding:10px 12px 4px;font-size:11px;color:var(--muted)}
 .nt-list-head .sb-item-act{opacity:1}
+.nt-note{position:relative}
+.nt-note.resizing{outline:1px dashed var(--fg-note);outline-offset:2px}
+.nt-note textarea{overflow:auto}
+.nt-resize{position:absolute;inset-inline-end:0;bottom:0;width:14px;height:14px;cursor:nwse-resize;touch-action:none;
+  background:linear-gradient(135deg,transparent 50%,var(--fg-note) 50%,var(--fg-note) 58%,transparent 58%,transparent 70%,var(--fg-note) 70%,var(--fg-note) 78%,transparent 78%);opacity:.35}
+.nt-note:hover .nt-resize,.nt-note.resizing .nt-resize{opacity:.8}
+.nt-notes{grid-auto-flow:row dense}
