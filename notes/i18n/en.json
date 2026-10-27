@@ -9,14 +9,10 @@
   "locked.text": "Notes and to-dos are encrypted with the master password: unlock the vault to see them.",
   "locked.unlock": "🔓 Unlock",
   "locked.still": "The vault is still locked",
-  "lists.title": "To-do",
   "lists.add": "＋ List",
-  "lists.none": "No lists: create one with ＋ List.",
   "lists.name": "List name",
   "lists.actions": "List actions",
   "lists.newTitle": "New list",
-  "lists.moveBefore": "Move before",
-  "lists.moveAfter": "Move after",
   "lists.delete": "Delete the list",
   "lists.confirmDelete": {
     "one": "Delete the list \"{name}\" and its item?",
@@ -32,9 +28,7 @@
   },
   "items.clearDone": "Clear done",
   "items.add": "Add an item (Enter)",
-  "notes.title": "Notes",
   "notes.add": "＋ Note",
-  "notes.none": "No notes: add one with ＋ Note.",
   "notes.placeholder": "Write here…",
   "notes.text": "Note text",
   "notes.saving": "saving…",
@@ -70,11 +64,15 @@
   "errors.done_invalid": "Invalid item state",
   "errors.color_invalid": "Invalid colour",
   "errors.note_changed": "The note was changed elsewhere in the meantime",
-  "notes.resize": "Drag to resize the note (width in columns and height); double click: normal size",
+  "notes.resize": "Drag to resize the note; double click: initial size",
   "errors.size_invalid": "Invalid note size",
   "board.items": "{open} to do of {items}",
   "board.notes": {
     "one": "{count} note",
     "other": "{count} notes"
-  }
+  },
+  "board.empty": "Empty board: add a list or a note with the buttons above, then drag them where you like.",
+  "board.drag": "Drag to move",
+  "lists.resize": "Drag to change the width; double click: initial width",
+  "errors.card_not_found": "Card not found"
 }

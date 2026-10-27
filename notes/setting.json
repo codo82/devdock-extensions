@@ -48,14 +48,14 @@
         "handler": "getBoard"
       },
       {
+        "method": "PUT",
+        "path": "/boards/:board/cards/:kind/:id",
+        "handler": "moveCard"
+      },
+      {
         "method": "POST",
         "path": "/boards/:board/lists",
         "handler": "addList"
-      },
-      {
-        "method": "PUT",
-        "path": "/boards/:board/lists/order",
-        "handler": "orderLists"
       },
       {
         "method": "PUT",
@@ -96,11 +96,6 @@
         "method": "POST",
         "path": "/boards/:board/notes",
         "handler": "addNote"
-      },
-      {
-        "method": "PUT",
-        "path": "/boards/:board/notes/order",
-        "handler": "orderNotes"
       },
       {
         "method": "PUT",

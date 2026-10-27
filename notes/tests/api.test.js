@@ -59,7 +59,7 @@ test('liste e voci: aggiunta, spunta, testo, ordine, completate tolte; contenuto
 });
 
 test('note: colore, salvataggio, modifica concorrente rifiutata; bacheca vuota tolta', async () => {
-  let r = await api('POST', `${G}/notes`, { text: '' });
+  let r = await api('POST', `${G}/notes`, { text: '', x: 40, y: 60 });
   const note = r.json.notes[0];
   assert.equal(note.color, 'yellow');
   r = await api('PUT', `${G}/notes/${note.id}`, { text: 'password del wifi: no, quella va altrove', color: 'blue', updatedAt: note.updatedAt });
@@ -70,12 +70,21 @@ test('note: colore, salvataggio, modifica concorrente rifiutata; bacheca vuota t
   r = await api('PUT', `${G}/notes/${note.id}`, { text: 'vecchia', updatedAt: note.updatedAt });
   assert.deepEqual([r.status, r.json.code], [409, 'notes.note_changed']);
   assert.equal((await api('PUT', `${G}/notes/${note.id}`, { color: 'rosso' })).json.code, 'notes.color_invalid');
-  // dimensioni: colonne e altezza, poi di nuovo normali
-  r = await api('PUT', `${G}/notes/${note.id}`, { w: 2, h: 300 });
-  assert.deepEqual([r.json.notes[0].w, r.json.notes[0].h], [2, 300]);
-  for (const size of [{ w: 4 }, { w: 0 }, { h: 20 }, { h: '300' }]) assert.equal((await api('PUT', `${G}/notes/${note.id}`, size)).json.code, 'notes.size_invalid');
-  r = await api('PUT', `${G}/notes/${note.id}`, { w: 1, h: null });
-  assert.deepEqual([r.json.notes[0].w, r.json.notes[0].h], [undefined, undefined]);
+  // posizione libera e dimensioni sulla bacheca; la scheda spostata va sopra le altre
+  assert.deepEqual([note.x, note.y, note.w, note.h], [40, 60, 240, 180]);
+  r = await api('POST', `${G}/lists`, { title: 'Sopra', x: 100, y: 100 });
+  const listId = r.json.lists[0].id;
+  assert.ok(r.json.lists[0].z > r.json.notes[0].z);
+  r = await api('PUT', `${G}/cards/note/${note.id}`, { x: 500, y: 320, w: 400, h: 300 });
+  assert.deepEqual([r.json.notes[0].x, r.json.notes[0].y, r.json.notes[0].w, r.json.notes[0].h], [500, 320, 400, 300]);
+  assert.ok(r.json.notes[0].z > r.json.lists[0].z);
+  r = await api('PUT', `${G}/cards/list/${listId}`, { w: 360 });
+  assert.equal(r.json.lists[0].w, 360);
+  for (const [kind, body] of [['note', { w: 100 }], ['note', { h: 5000 }], ['note', { x: -1 }], ['note', { y: 1.5 }], ['list', { h: 300 }]]) {
+    assert.equal((await api('PUT', `${G}/cards/${kind}/${kind === 'note' ? note.id : listId}`, body)).json.code, 'notes.size_invalid');
+  }
+  assert.equal((await api('PUT', `${G}/cards/box/${note.id}`, { x: 1 })).json.code, 'notes.card_not_found');
+  await api('DELETE', `${G}/lists/${listId}`);
   assert.doesNotMatch(JSON.stringify(srv.readConfig()), /wifi/);
 
   r = await api('DELETE', `${G}/notes/${note.id}`);
@@ -95,4 +104,24 @@ test('cambio della master password: contenuto ri-cifrato e ancora leggibile; res
   assert.equal((await api('GET', '/boards/shop')).status, 423);
   assert.equal((await api('POST', '/vault/reset', { confirm: 'RESET' })).status, 200);
   assert.deepEqual(srv.readConfig().notesBoards, []);
+});
+
+test('bacheche della 1.x: liste e note ricevono una posizione, le note larghe in colonne diventano px', () => {
+  // backend con un vault finto che restituisce una bacheca salvata dalla 1.1 (senza posizioni)
+  const legacy = { lists: [{ id: 'l1', title: 'A', items: [] }], notes: [{ id: 'n1', text: 'x', color: 'blue', w: 2, h: 200 }, { id: 'n2', text: 'y' }] };
+  const ctx = {
+    lib: { validate: { KEY_RE: /^[A-Za-z0-9_-]{1,64}$/ } },
+    vault: { register() {}, isBox: () => true, state: () => 'unlocked', decrypt: () => JSON.stringify(legacy) },
+    config: { get: () => [{ board: '@general', box: {} }] },
+    projects: { get: () => null },
+    error: (status, code) => Object.assign(new Error(code), { status, code }),
+  };
+  ctx.error.config = ctx.error;
+  const notes = require('../server.js')(ctx);
+  let body;
+  notes.handlers.getBoard({ params: { board: '@general' } }, { json: b => { body = b; } });
+  const [l1] = body.lists, [n1, n2] = body.notes;
+  assert.deepEqual([l1.x, l1.y, l1.w], [20, 20, 280]);
+  assert.deepEqual([n1.x, n1.y, n1.w, n1.h], [320, 20, 500, 250]); // 2 colonne → 500 px, testo 200 + barra e piede
+  assert.deepEqual([n2.x, n2.w, n2.h], [620, 240, 180]);
 });

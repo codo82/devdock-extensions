@@ -1,12 +1,15 @@
 // Note e to-do: nella sidebar lo spazio "Generale" e i progetti (con le voci aperte), nel
-// pannello le liste da spuntare e le note tipo post-it della bacheca scelta. Tutto passa dal
-// vault della master password: bloccato, la sezione mostra solo "Sblocca".
+// pannello la bacheca scelta, una tela dove liste da spuntare e note tipo post-it stanno dove
+// l'utente le trascina, con la loro dimensione. Tutto passa dal vault della master password:
+// bloccato, la sezione mostra solo "Sblocca".
 
 const EXT = 'Ext.notes';
 const GENERAL = '@general';
 const COLORS = ['yellow', 'green', 'blue', 'pink', 'purple', 'gray'];
 const ACTIVE_KEY = 'kelbo.notes.board';
 const SAVE_DELAY = 700; // ms dopo l'ultimo tasto prima di salvare una nota
+const GRID = 10;        // passo (px) di posizioni e dimensioni trascinate
+const SIZES = { list: { w: 280 }, note: { w: 240, h: 180 }, minW: 180, maxW: 1600, minH: 80, maxH: 1600 };
 
 export default {
   async mount(ctx) {
@@ -118,16 +121,27 @@ export default {
       if (locked || !board) return;
       $(ctx.root, 'title').textContent = boardLabel(board.board);
       renderSummary();
-      renderLists();
-      renderNotes();
+      renderCards();
     }
 
-    function renderLists() {
-      const el = $(ctx.root, 'lists');
+    // Tutte le schede sulla tela, nell'ordine di sovrapposizione
+    function renderCards() {
+      flushNotes();
+      const el = $(ctx.root, 'canvas');
       const focus = document.activeElement?.dataset?.add; // il campo "aggiungi" resta attivo dopo l'invio
-      el.innerHTML = board.lists.length ? board.lists.map(listHtml).join('') : `<p class="nt-empty">${esc(t('lists.none'))}</p>`;
+      const cards = [...board.lists.map(l => ({ kind: 'list', c: l })), ...board.notes.map(n => ({ kind: 'note', c: n }))].sort((a, b) => a.c.z - b.c.z);
+      cards.forEach((x, i) => { layer.set(x.c, i + 1); });
+      el.innerHTML = cards.length ? cards.map(({ kind, c }) => (kind === 'list' ? listHtml(c) : noteHtml(c))).join('')
+        : `<p class="nt-empty">${esc(t('board.empty'))}</p>`;
       if (focus) el.querySelector(`[data-add="${CSS.escape(focus)}"]`)?.focus();
+      sizeCanvas();
     }
+    const renderLists = renderCards, renderNotes = renderCards;
+
+    // z-index: posizione nell'ordine di sovrapposizione (1…n), sotto l'intestazione della bacheca
+    const layer = new WeakMap();
+    const cardStyle = (c, h) => `left:${Number(c.x)}px;top:${Number(c.y)}px;width:${Number(c.w)}px;${h ? `height:${Number(c.h)}px;` : ''}z-index:${layer.get(c) || 1}`;
+    const cardTools = kind => `<span class="nt-resize" data-resize title="${esc(t(kind === 'list' ? 'lists.resize' : 'notes.resize'))}"></span>`;
 
     function listHtml(l) {
       const open = l.items.filter(i => !i.done), done = l.items.filter(i => i.done);
@@ -137,8 +151,9 @@ export default {
           <input class="nt-item-text" value="${esc(i.text)}" maxlength="1000" data-text aria-label="${esc(t('items.text'))}">
           ${i.done && i.doneAt ? `<span class="nt-item-date" title="${esc(fmt.date(i.doneAt, { dateStyle: 'medium', timeStyle: 'short' }))}">${esc(fmt.relative(i.doneAt))}</span>` : ''}
           <button class="nt-del" data-del-item title="${esc(t('core.action.delete'))}">✕</button></li>`;
-      return `<section class="nt-list" data-list="${esc(l.id)}">
+      return `<section class="nt-card nt-list" data-card="list" data-id="${esc(l.id)}" data-list="${esc(l.id)}" style="${cardStyle(l, false)}">
         <div class="nt-list-head">
+          <span class="nt-grip" data-drag title="${esc(t('board.drag'))}">⠿</span>
           <input class="nt-list-title" value="${esc(l.title)}" maxlength="200" data-list-title aria-label="${esc(t('lists.name'))}">
           <span class="sb-count">${esc(fmt.number(open.length))}</span>
           <button class="sb-item-act" onclick="${EXT}.listMenu(event, ${js(l.id)})" title="${esc(t('lists.actions'))}">⋯</button>
@@ -148,89 +163,97 @@ export default {
           <button onclick="${EXT}.clearDone(${js(l.id)})">${esc(t('items.clearDone'))}</button></div>
           <ul class="nt-items">${done.map(itemHtml).join('')}</ul>` : ''}
         <input class="form-input nt-add" data-add="${esc(l.id)}" maxlength="1000" placeholder="${esc(t('items.add'))}" aria-label="${esc(t('items.add'))}">
+        ${cardTools('list')}
       </section>`;
     }
 
-    function renderNotes() {
-      flushNotes();
-      const el = $(ctx.root, 'notes');
-      el.innerHTML = board.notes.length ? board.notes.map(n => `<div class="nt-note nt-c-${esc(n.color)}" data-note="${esc(n.id)}" data-w="${n.w || 1}">
-          <textarea maxlength="10000" placeholder="${esc(t('notes.placeholder'))}" aria-label="${esc(t('notes.text'))}" data-note-text ${n.h ? `data-h="${Number(n.h)}"` : ''}>${esc(n.text)}</textarea>
+    function noteHtml(n) {
+      return `<div class="nt-card nt-note nt-c-${esc(n.color)}" data-card="note" data-id="${esc(n.id)}" data-note="${esc(n.id)}" style="${cardStyle(n, true)}">
+          <div class="nt-note-bar" data-drag title="${esc(t('board.drag'))}"></div>
+          <textarea maxlength="10000" placeholder="${esc(t('notes.placeholder'))}" aria-label="${esc(t('notes.text'))}" data-note-text>${esc(n.text)}</textarea>
           <footer>
             ${COLORS.map(c => `<button class="nt-dot nt-c-${c} ${c === n.color ? 'active' : ''}" data-color="${c}" title="${esc(t(`colors.${c}`))}" aria-label="${esc(t(`colors.${c}`))}"></button>`).join('')}
             <span class="nt-saved" data-saved>${n.updatedAt ? esc(fmt.relative(n.updatedAt)) : ''}</span>
             <button class="nt-del" data-del-note title="${esc(t('core.action.delete'))}">✕</button>
           </footer>
-          <span class="nt-resize" data-resize title="${esc(t('notes.resize'))}"></span></div>`).join('') : `<p class="nt-empty">${esc(t('notes.none'))}</p>`;
-      for (const ta of el.querySelectorAll('textarea')) grow(ta);
-      fitWidths();
+          ${cardTools('note')}</div>`;
     }
 
-    // Altezza del testo: quella scelta trascinando, altrimenti secondo il contenuto
-    const grow = ta => {
-      if (ta.dataset.h) { ta.style.height = `${ta.dataset.h}px`; return; }
-      ta.style.height = 'auto';
-      ta.style.height = `${Math.max(110, ta.scrollHeight)}px`;
-    };
-
-    // Colonne della griglia delle note, dalla sua larghezza (come auto-fill di minmax(NOTE_MIN, 1fr)):
-    // quelle calcolate dal browser contano anche le colonne in più create da una nota larga
-    const NOTE_MIN = 220;
-    const gridGap = () => parseFloat(getComputedStyle($(ctx.root, 'notes')).columnGap) || 0;
-    const columns = () => Math.max(1, Math.floor(($(ctx.root, 'notes').clientWidth + gridGap()) / (NOTE_MIN + gridGap())));
-    // Larghezza di ogni nota: le sue colonne, al massimo quelle disponibili
-    function fitWidths() {
-      const cols = columns();
-      for (const el of ctx.root.querySelectorAll('[data-note]')) el.style.gridColumn = `span ${Math.min(Number(el.dataset.w) || 1, cols)}`;
-    }
-    new ResizeObserver(() => fitWidths()).observe($(ctx.root, 'notes'));
-
-    // ---- note: ridimensionamento dall'angolo (colonne e altezza), doppio clic per tornare normale ----
-
-    function saveSize(noteEl, size) {
-      const id = noteEl.dataset.note;
-      clearTimeout(pending.get(id)); pending.delete(id);
-      const n = board.notes.find(x => x.id === id);
-      const text = noteEl.querySelector('textarea').value;
-      call(api => api.put(url(active, 'notes', id), { ...size, text, updatedAt: n.updatedAt })).then(r => r && renderNotes());
+    // La tela è grande quanto serve per contenere tutte le schede, più un margine per allargarsi
+    function sizeCanvas() {
+      const el = $(ctx.root, 'canvas');
+      let w = 0, h = 0;
+      for (const c of el.querySelectorAll('[data-card]')) {
+        w = Math.max(w, c.offsetLeft + c.offsetWidth);
+        h = Math.max(h, c.offsetTop + c.offsetHeight);
+      }
+      el.style.width = `${w + 200}px`;
+      el.style.height = `${h + 200}px`;
     }
 
-    ctx.root.addEventListener('pointerdown', e => {
-      const handle = e.target.closest('[data-resize]');
-      if (!handle) return;
+    // ---- schede: trascinamento (dalla barra) e ridimensionamento (dall'angolo) ----
+
+    const snap = v => Math.round(v / GRID) * GRID;
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    const cardData = el => (el.dataset.card === 'list' ? board.lists : board.notes).find(c => c.id === el.dataset.id);
+
+    async function saveCard(el, changes) {
+      const id = el.dataset.id, kind = el.dataset.card;
+      // il testo in attesa si salva prima (e la nota non si ridisegna: si sta scrivendo)
+      const writing = kind === 'note' && pending.has(id);
+      if (writing) await saveNote(id);
+      const r = await call(api => api.put(url(active, 'cards', kind, id), changes));
+      if (r && !writing) renderCards();
+    }
+
+    // Trascina con il puntatore: onMove(dx, dy) durante, onEnd() alla fine
+    function track(e, handle, onMove, onEnd) {
       e.preventDefault();
-      const noteEl = handle.closest('[data-note]');
-      const ta = noteEl.querySelector('textarea');
-      const grid = $(ctx.root, 'notes');
-      const cols = columns();
-      const gap = gridGap();
-      const step = (grid.clientWidth + gap) / cols; // larghezza di una colonna con il suo spazio
-      const start = { x: e.clientX, y: e.clientY, w: Math.min(Number(noteEl.dataset.w) || 1, cols), h: ta.offsetHeight };
-      let size = { w: start.w, h: start.h };
+      const start = { x: e.clientX, y: e.clientY };
       handle.setPointerCapture(e.pointerId);
-      noteEl.classList.add('resizing');
-      const move = ev => {
-        size = {
-          w: Math.max(1, Math.min(3, cols, Math.round((start.w * step + ev.clientX - start.x) / step))),
-          h: Math.round(Math.max(80, Math.min(1200, start.h + ev.clientY - start.y))),
-        };
-        noteEl.dataset.w = size.w;
-        noteEl.style.gridColumn = `span ${size.w}`;
-        ta.dataset.h = size.h;
-        ta.style.height = `${size.h}px`;
-      };
+      const move = ev => { onMove(ev.clientX - start.x, ev.clientY - start.y); sizeCanvas(); };
       const up = () => {
         handle.removeEventListener('pointermove', move);
         handle.removeEventListener('pointerup', up);
-        noteEl.classList.remove('resizing');
-        if (size.w !== start.w || size.h !== start.h) saveSize(noteEl, size);
+        onEnd();
       };
       handle.addEventListener('pointermove', move);
       handle.addEventListener('pointerup', up);
+    }
+
+    ctx.root.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return;
+      const drag = e.target.closest('[data-drag]'), resize = e.target.closest('[data-resize]');
+      const el = (drag || resize)?.closest('[data-card]');
+      if (!el) return;
+      const c = cardData(el);
+      el.style.zIndex = String(board.lists.length + board.notes.length + 1); // sopra le altre subito
+      el.classList.add(drag ? 'moving' : 'resizing');
+      let next = {};
+      if (drag) {
+        track(e, drag, (dx, dy) => {
+          next = { x: clamp(snap(c.x + dx), 0, 20000), y: clamp(snap(c.y + dy), 0, 20000) };
+          el.style.left = `${next.x}px`; el.style.top = `${next.y}px`;
+        }, () => {
+          el.classList.remove('moving');
+          if (next.x !== undefined && (next.x !== c.x || next.y !== c.y)) saveCard(el, next);
+        });
+      } else {
+        const note = el.dataset.card === 'note';
+        track(e, resize, (dx, dy) => {
+          next = { w: clamp(snap(c.w + dx), SIZES.minW, SIZES.maxW), ...(note ? { h: clamp(snap(c.h + dy), SIZES.minH, SIZES.maxH) } : {}) };
+          el.style.width = `${next.w}px`;
+          if (note) el.style.height = `${next.h}px`;
+        }, () => {
+          el.classList.remove('resizing');
+          if (next.w !== undefined && (next.w !== c.w || (note && next.h !== c.h))) saveCard(el, next);
+        });
+      }
     });
+    // doppio clic sull'angolo: dimensione iniziale
     ctx.root.addEventListener('dblclick', e => {
-      const handle = e.target.closest('[data-resize]');
-      if (handle) saveSize(handle.closest('[data-note]'), { w: 1, h: null });
+      const el = e.target.closest('[data-resize]')?.closest('[data-card]');
+      if (el) saveCard(el, el.dataset.card === 'note' ? { ...SIZES.note } : { ...SIZES.list });
     });
 
     // ---- note: salvataggio automatico ----
@@ -267,6 +290,16 @@ export default {
     // Salvataggi in attesa eseguiti subito (prima di ridisegnare le note o cambiare bacheca)
     function flushNotes() { for (const id of [...pending.keys()]) saveNote(id); }
 
+    // Posto per una scheda nuova: in alto a sinistra della parte visibile, un po' sfalsata se
+    // lì c'è già qualcosa
+    function freeSpot() {
+      const scroller = $(ctx.root, 'board'), canvas = $(ctx.root, 'canvas');
+      let x = snap(scroller.scrollLeft + 20), y = snap(Math.max(0, scroller.scrollTop - canvas.offsetTop) + 20);
+      const taken = [...board.lists, ...board.notes];
+      for (let i = 0; i < 20 && taken.some(c => c.x === x && c.y === y); i++) { x += 30; y += 30; }
+      return { x, y };
+    }
+
     // ---- azioni ----
 
     const actions = {
@@ -280,7 +313,7 @@ export default {
       },
       async unlock() { if (await ctx.vault.ensure()) load(); },
       async addList() {
-        const r = await call(api => api.post(url(active, 'lists'), { title: t('lists.newTitle') }));
+        const r = await call(api => api.post(url(active, 'lists'), { title: t('lists.newTitle'), ...freeSpot() }));
         if (!r) return;
         renderLists();
         const input = ctx.root.querySelector(`[data-list="${CSS.escape(r.lists.at(-1).id)}"] [data-list-title]`);
@@ -288,24 +321,16 @@ export default {
       },
       async addNote() {
         flushNotes();
-        const r = await call(api => api.post(url(active, 'notes'), { text: '' }));
+        const r = await call(api => api.post(url(active, 'notes'), { text: '', ...freeSpot() }));
         if (!r) return;
         renderNotes();
-        ctx.root.querySelector(`[data-note="${CSS.escape(r.notes[0].id)}"] textarea`)?.focus();
+        ctx.root.querySelector(`[data-note="${CSS.escape(r.notes.at(-1).id)}"] textarea`)?.focus();
       },
       listMenu(event, listId) {
-        const i = board.lists.findIndex(l => l.id === listId);
-        const l = board.lists[i];
-        const move = to => {
-          const ids = board.lists.map(x => x.id);
-          ids.splice(to, 0, ids.splice(i, 1)[0]);
-          call(api => api.put(url(active, 'lists', 'order'), { ids })).then(r => r && renderLists());
-        };
+        const l = board.lists.find(x => x.id === listId);
         event.stopPropagation();
         const r = event.currentTarget.getBoundingClientRect();
         ctx.ui.contextMenu(r.left, r.bottom, [
-          { label: t('lists.moveBefore'), icon: '◀', disabled: i === 0, action: () => move(i - 1) },
-          { label: t('lists.moveAfter'), icon: '▶', disabled: i === board.lists.length - 1, action: () => move(i + 1) },
           { label: t('items.clearDone'), icon: '✓', disabled: !l.items.some(x => x.done), action: () => actions.clearDone(listId) },
           'separator',
           { label: t('lists.delete'), icon: '🗑', danger: true, action: () => {
@@ -384,7 +409,6 @@ export default {
 
     ctx.root.addEventListener('input', e => {
       if (!e.target.matches('[data-note-text]')) return;
-      grow(e.target);
       scheduleNote(e.target.closest('[data-note]').dataset.note);
     });
 

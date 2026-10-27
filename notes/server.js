@@ -6,7 +6,9 @@ const crypto = require('crypto');
 const GENERAL = '@general';           // bacheca non legata a un progetto
 const COLORS = ['yellow', 'green', 'blue', 'pink', 'purple', 'gray'];
 const LIMITS = { lists: 50, items: 500, notes: 200, title: 200, item: 1000, note: 10000 };
-const SIZE = { maxColumns: 3, minHeight: 80, maxHeight: 1200 }; // dimensioni di una nota: colonne della griglia, altezza del testo (px)
+// Posizione libera sulla bacheca (px): x, y, larghezza w, altezza h (solo note; le liste crescono
+// con le voci) e z, l'ordine di sovrapposizione (l'ultima spostata sta sopra)
+const CARD = { maxXY: 20000, minW: 180, maxW: 1600, minH: 80, maxH: 1600, list: { w: 280 }, note: { w: 240, h: 180 } };
 
 module.exports = function createNotes(ctx) {
   const { KEY_RE } = ctx.lib.validate;
@@ -55,16 +57,50 @@ module.exports = function createNotes(ctx) {
     if (!stored) return empty();
     let data;
     try { data = JSON.parse(vault.decrypt(stored.box)); } catch (e) { if (e.code) throw e; throw ctx.error(500, 'board_unreadable'); }
-    return {
+    return layout({
       lists: (Array.isArray(data?.lists) ? data.lists : []).map(l => ({
         id: String(l.id), title: String(l.title || ''),
         items: (Array.isArray(l.items) ? l.items : []).map(i => ({ id: String(i.id), text: String(i.text || ''), done: !!i.done, ...(i.doneAt ? { doneAt: String(i.doneAt) } : {}) })),
+        ...place(l),
       })),
       notes: (Array.isArray(data?.notes) ? data.notes : []).map(n => ({
         id: String(n.id), text: String(n.text || ''), color: COLORS.includes(n.color) ? n.color : COLORS[0], updatedAt: String(n.updatedAt || ''),
-        ...(validWidth(n.w) && n.w > 1 ? { w: n.w } : {}), ...(validHeight(n.h) ? { h: n.h } : {}),
+        ...place(n, true),
       })),
-    };
+    });
+  }
+
+  const isXY = v => Number.isInteger(v) && v >= 0 && v <= CARD.maxXY;
+  const isW = v => Number.isInteger(v) && v >= CARD.minW && v <= CARD.maxW;
+  const isH = v => Number.isInteger(v) && v >= CARD.minH && v <= CARD.maxH;
+  // Posizione salvata, se valida; le note della 1.1 avevano w in colonne (1–3) e h del solo testo
+  function place(c, note = false) {
+    const out = {};
+    if (isXY(c.x) && isXY(c.y)) Object.assign(out, { x: c.x, y: c.y });
+    if (Number.isInteger(c.z) && c.z >= 0) out.z = c.z;
+    const legacy = out.x === undefined;
+    out.w = isW(c.w) ? c.w : legacy && [1, 2, 3].includes(c.w) ? c.w * 250 : CARD[note ? 'note' : 'list'].w;
+    if (note) out.h = !isH(c.h) ? CARD.note.h : legacy ? Math.min(CARD.maxH, c.h + 50) : c.h; // + barra e piede della nota
+    return out;
+  }
+  // Schede senza posizione (bacheche della 1.x): in righe da quattro, prima le liste poi le note
+  function layout(data) {
+    let i = 0;
+    for (const c of [...data.lists, ...data.notes]) {
+      if (c.x === undefined) { Object.assign(c, { x: 20 + (i % 4) * 300, y: 20 + Math.floor(i / 4) * 320 }); i++; }
+      if (c.z === undefined) c.z = 0;
+    }
+    return data;
+  }
+  const topZ = data => Math.max(0, ...[...data.lists, ...data.notes].map(c => c.z)) + 1;
+  // Posizione di una scheda nuova: quella chiesta (la parte visibile della bacheca) o sotto le altre
+  function newPlace(data, body) {
+    if (body.x !== undefined || body.y !== undefined) {
+      if (!isXY(body.x) || !isXY(body.y)) throw ctx.error(400, 'size_invalid');
+      return { x: body.x, y: body.y, z: topZ(data) };
+    }
+    const bottom = Math.max(0, ...[...data.lists, ...data.notes].map(c => c.y + (c.h || 300)));
+    return { x: 20, y: Math.min(CARD.maxXY, bottom + 20), z: topZ(data) };
   }
 
   // Bacheca vuota → tolta dalla configurazione
@@ -73,9 +109,6 @@ module.exports = function createNotes(ctx) {
     const isEmpty = !data.lists.length && !data.notes.length;
     ctx.config.set('notesBoards', isEmpty ? rest : [...rest, { board: boardId, box: vault.encrypt(JSON.stringify(data)) }]);
   }
-
-  const validWidth = w => Number.isInteger(w) && w >= 1 && w <= SIZE.maxColumns;
-  const validHeight = h => Number.isInteger(h) && h >= SIZE.minHeight && h <= SIZE.maxHeight;
 
   const counts = data => {
     const items = data.lists.flatMap(l => l.items);
@@ -140,11 +173,10 @@ module.exports = function createNotes(ctx) {
 
       addList: change((data, body) => {
         if (data.lists.length >= LIMITS.lists) throw ctx.error(400, 'too_many_lists', { max: LIMITS.lists });
-        data.lists.push({ id: newId(), title: text(body.title, LIMITS.title, 'title'), items: [] });
+        data.lists.push({ id: newId(), title: text(body.title, LIMITS.title, 'title'), items: [], w: CARD.list.w, ...newPlace(data, body) });
       }),
       updateList: change((data, body, p) => { listOr404(data, p.list).title = text(body.title, LIMITS.title, 'title'); }),
       deleteList: change((data, body, p) => { listOr404(data, p.list); data.lists = data.lists.filter(l => l.id !== p.list); }),
-      orderLists: change((data, body) => { data.lists = reorder(data.lists, body.ids); }),
 
       addItem: change((data, body, p) => {
         const list = listOr404(data, p.list);
@@ -173,7 +205,7 @@ module.exports = function createNotes(ctx) {
         if (data.notes.length >= LIMITS.notes) throw ctx.error(400, 'too_many_notes', { max: LIMITS.notes });
         const color = body.color === undefined ? COLORS[0] : body.color;
         if (!COLORS.includes(color)) throw ctx.error(400, 'color_invalid');
-        data.notes.unshift({ id: newId(), text: noteText(body.text ?? ''), color, updatedAt: new Date().toISOString() });
+        data.notes.push({ id: newId(), text: noteText(body.text ?? ''), color, updatedAt: new Date().toISOString(), w: CARD.note.w, h: CARD.note.h, ...newPlace(data, body) });
       }),
       updateNote: change((data, body, p) => {
         const note = noteOr404(data, p.note);
@@ -184,19 +216,23 @@ module.exports = function createNotes(ctx) {
           if (!COLORS.includes(body.color)) throw ctx.error(400, 'color_invalid');
           note.color = body.color;
         }
-        // dimensioni: w colonne (1 = normale), h altezza del testo (null = secondo il contenuto)
-        if (body.w !== undefined) {
-          if (!validWidth(body.w)) throw ctx.error(400, 'size_invalid');
-          if (body.w > 1) note.w = body.w; else delete note.w;
-        }
-        if (body.h !== undefined) {
-          if (body.h !== null && !validHeight(body.h)) throw ctx.error(400, 'size_invalid');
-          if (body.h === null) delete note.h; else note.h = body.h;
-        }
         note.updatedAt = new Date().toISOString();
       }),
       deleteNote: change((data, body, p) => { noteOr404(data, p.note); data.notes = data.notes.filter(n => n.id !== p.note); }),
-      orderNotes: change((data, body) => { data.notes = reorder(data.notes, body.ids); }),
+
+      // Scheda spostata o ridimensionata: { x, y, w, h (solo note) }, tutti facoltativi; va sopra le altre
+      moveCard: change((data, body, p) => {
+        const card = p.kind === 'list' ? listOr404(data, p.id) : p.kind === 'note' ? noteOr404(data, p.id) : null;
+        if (!card) throw ctx.error(404, 'card_not_found');
+        const check = (key, ok) => { if (body[key] !== undefined && !ok(body[key])) throw ctx.error(400, 'size_invalid'); };
+        check('x', isXY); check('y', isXY); check('w', isW);
+        if (p.kind === 'note') check('h', isH); else if (body.h !== undefined) throw ctx.error(400, 'size_invalid');
+        for (const k of ['x', 'y', 'w', 'h']) if (body[k] !== undefined) card[k] = body[k];
+        // ordine di sovrapposizione rinumerato 0…n-1, la scheda spostata in cima
+        const others = [...data.lists, ...data.notes].filter(c => c !== card).sort((a, b) => a.z - b.z);
+        others.forEach((c, i) => { c.z = i; });
+        card.z = others.length;
+      }),
     }),
   };
 };

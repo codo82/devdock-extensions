@@ -9,14 +9,10 @@
   "locked.text": "Note e to-do sono cifrati con la master password: sblocca il vault per vederli.",
   "locked.unlock": "🔓 Sblocca",
   "locked.still": "Il vault è ancora bloccato",
-  "lists.title": "To-do",
   "lists.add": "＋ Lista",
-  "lists.none": "Nessuna lista: creane una con ＋ Lista.",
   "lists.name": "Nome della lista",
   "lists.actions": "Azioni della lista",
   "lists.newTitle": "Nuova lista",
-  "lists.moveBefore": "Sposta prima",
-  "lists.moveAfter": "Sposta dopo",
   "lists.delete": "Elimina la lista",
   "lists.confirmDelete": {
     "one": "Eliminare la lista \"{name}\" con la sua voce?",
@@ -32,9 +28,7 @@
   },
   "items.clearDone": "Togli completate",
   "items.add": "Aggiungi una voce (Invio)",
-  "notes.title": "Note",
   "notes.add": "＋ Nota",
-  "notes.none": "Nessuna nota: aggiungine una con ＋ Nota.",
   "notes.placeholder": "Scrivi qui…",
   "notes.text": "Testo della nota",
   "notes.saving": "salvataggio…",
@@ -70,11 +64,15 @@
   "errors.done_invalid": "Stato della voce non valido",
   "errors.color_invalid": "Colore non valido",
   "errors.note_changed": "La nota è stata modificata altrove nel frattempo",
-  "notes.resize": "Trascina per ridimensionare la nota (larghezza in colonne e altezza); doppio clic: dimensione normale",
+  "notes.resize": "Trascina per ridimensionare la nota; doppio clic: dimensione iniziale",
   "errors.size_invalid": "Dimensione della nota non valida",
   "board.items": "{open} da fare su {items}",
   "board.notes": {
     "one": "{count} nota",
     "other": "{count} note"
-  }
+  },
+  "board.empty": "Bacheca vuota: aggiungi una lista o una nota con i pulsanti in alto, poi trascinale dove vuoi.",
+  "board.drag": "Trascina per spostare",
+  "lists.resize": "Trascina per cambiare la larghezza; doppio clic: larghezza iniziale",
+  "errors.card_not_found": "Scheda non trovata"
 }
