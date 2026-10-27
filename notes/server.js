@@ -64,7 +64,7 @@ module.exports = function createNotes(ctx) {
         ...place(l),
       })),
       notes: (Array.isArray(data?.notes) ? data.notes : []).map(n => ({
-        id: String(n.id), text: String(n.text || ''), color: COLORS.includes(n.color) ? n.color : COLORS[0], updatedAt: String(n.updatedAt || ''),
+        id: String(n.id), title: String(n.title || ''), text: String(n.text || ''), color: COLORS.includes(n.color) ? n.color : COLORS[0], updatedAt: String(n.updatedAt || ''),
         ...place(n, true),
       })),
     });
@@ -128,6 +128,12 @@ module.exports = function createNotes(ctx) {
     if (!v) throw ctx.error(400, `${name}_required`);
     if (v.length > max) throw ctx.error(400, `${name}_too_long`, { max });
     return v;
+  };
+  // titolo della nota: facoltativo (vuoto = nessun titolo)
+  const noteTitle = value => {
+    if (typeof value !== 'string') throw ctx.error(400, 'title_invalid');
+    if (value.trim().length > LIMITS.title) throw ctx.error(400, 'title_too_long', { max: LIMITS.title });
+    return value.trim();
   };
   const noteText = value => {
     if (typeof value !== 'string') throw ctx.error(400, 'note_required');
@@ -205,12 +211,13 @@ module.exports = function createNotes(ctx) {
         if (data.notes.length >= LIMITS.notes) throw ctx.error(400, 'too_many_notes', { max: LIMITS.notes });
         const color = body.color === undefined ? COLORS[0] : body.color;
         if (!COLORS.includes(color)) throw ctx.error(400, 'color_invalid');
-        data.notes.push({ id: newId(), text: noteText(body.text ?? ''), color, updatedAt: new Date().toISOString(), w: CARD.note.w, h: CARD.note.h, ...newPlace(data, body) });
+        data.notes.push({ id: newId(), title: noteTitle(body.title ?? ''), text: noteText(body.text ?? ''), color, updatedAt: new Date().toISOString(), w: CARD.note.w, h: CARD.note.h, ...newPlace(data, body) });
       }),
       updateNote: change((data, body, p) => {
         const note = noteOr404(data, p.note);
         // modificata altrove nel frattempo: non si sovrascrive
         if (body.updatedAt !== undefined && body.updatedAt !== note.updatedAt) throw ctx.error(409, 'note_changed');
+        if (body.title !== undefined) note.title = noteTitle(body.title);
         if (body.text !== undefined) note.text = noteText(body.text);
         if (body.color !== undefined) {
           if (!COLORS.includes(body.color)) throw ctx.error(400, 'color_invalid');

@@ -155,9 +155,10 @@ export default {
         <div class="nt-list-head">
           <span class="nt-grip" data-drag title="${esc(t('board.drag'))}">⠿</span>
           <input class="nt-list-title" value="${esc(l.title)}" maxlength="200" data-list-title aria-label="${esc(t('lists.name'))}">
-          <span class="sb-count">${esc(fmt.number(open.length))}</span>
+          ${l.items.length ? `<span class="nt-pct" title="${esc(t('lists.progress', { done: fmt.number(done.length), total: fmt.number(l.items.length) }))}">${esc(fmt.number(done.length / l.items.length, { style: 'percent' }))}</span>` : ''}
           <button class="sb-item-act" onclick="${EXT}.listMenu(event, ${js(l.id)})" title="${esc(t('lists.actions'))}">⋯</button>
         </div>
+        ${l.items.length ? `<div class="nt-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${l.items.length}" aria-valuenow="${done.length}"><span style="width:${(done.length / l.items.length) * 100}%"></span></div>` : ''}
         <ul class="nt-items">${open.map(itemHtml).join('')}</ul>
         ${done.length ? `<div class="nt-done-head"><span>${esc(t('items.doneCount', { count: done.length }))}</span>
           <button onclick="${EXT}.clearDone(${js(l.id)})">${esc(t('items.clearDone'))}</button></div>
@@ -170,6 +171,7 @@ export default {
     function noteHtml(n) {
       return `<div class="nt-card nt-note nt-c-${esc(n.color)}" data-card="note" data-id="${esc(n.id)}" data-note="${esc(n.id)}" style="${cardStyle(n, true)}">
           <div class="nt-note-bar" data-drag title="${esc(t('board.drag'))}"></div>
+          <input class="nt-note-title" value="${esc(n.title || '')}" maxlength="200" placeholder="${esc(t('notes.titlePlaceholder'))}" aria-label="${esc(t('notes.title'))}" data-note-title>
           <textarea maxlength="10000" placeholder="${esc(t('notes.placeholder'))}" aria-label="${esc(t('notes.text'))}" data-note-text>${esc(n.text)}</textarea>
           <footer>
             ${COLORS.map(c => `<button class="nt-dot nt-c-${c} ${c === n.color ? 'active' : ''}" data-color="${c}" title="${esc(t(`colors.${c}`))}" aria-label="${esc(t(`colors.${c}`))}"></button>`).join('')}
@@ -273,7 +275,8 @@ export default {
       if (!note || !ta) return;
       const boardId = board.board;
       try {
-        const r = await withVault(() => ctx.api.put(url(boardId, 'notes', id), { text: ta.value, updatedAt: note.updatedAt }));
+        const title = ctx.root.querySelector(`[data-note="${CSS.escape(id)}"] [data-note-title]`)?.value ?? note.title;
+        const r = await withVault(() => ctx.api.put(url(boardId, 'notes', id), { title, text: ta.value, updatedAt: note.updatedAt }));
         if (board?.board !== boardId) return;
         // le note restano come sono (si sta scrivendo): si aggiornano dati, contatori e "salvata"
         board.notes = r.notes; board.counts = r.counts;
@@ -290,14 +293,16 @@ export default {
     // Salvataggi in attesa eseguiti subito (prima di ridisegnare le note o cambiare bacheca)
     function flushNotes() { for (const id of [...pending.keys()]) saveNote(id); }
 
-    // Posto per una scheda nuova: in alto a sinistra della parte visibile, un po' sfalsata se
-    // lì c'è già qualcosa
-    function freeSpot() {
+    // Posto per una scheda nuova (w × h): il primo spazio libero nella parte visibile della
+    // bacheca, da sinistra a destra e dall'alto in basso; se non c'è, in alto a sinistra
+    function freeSpot(w, h) {
       const scroller = $(ctx.root, 'board'), canvas = $(ctx.root, 'canvas');
-      let x = snap(scroller.scrollLeft + 20), y = snap(Math.max(0, scroller.scrollTop - canvas.offsetTop) + 20);
-      const taken = [...board.lists, ...board.notes];
-      for (let i = 0; i < 20 && taken.some(c => c.x === x && c.y === y); i++) { x += 30; y += 30; }
-      return { x, y };
+      const left = snap(scroller.scrollLeft + 20), top = snap(Math.max(0, scroller.scrollTop - canvas.offsetTop) + 20);
+      const right = left + Math.max(w, scroller.clientWidth - 40), bottom = top + Math.max(h, scroller.clientHeight - canvas.offsetTop - 40);
+      const taken = [...canvas.querySelectorAll('[data-card]')].map(c => ({ x: c.offsetLeft, y: c.offsetTop, w: c.offsetWidth, h: c.offsetHeight }));
+      const free = (x, y) => taken.every(c => x + w + 10 <= c.x || c.x + c.w + 10 <= x || y + h + 10 <= c.y || c.y + c.h + 10 <= y);
+      for (let y = top; y + h <= bottom; y += 20) for (let x = left; x + w <= right; x += 20) if (free(x, y)) return { x, y };
+      return { x: left, y: top };
     }
 
     // ---- azioni ----
@@ -313,7 +318,7 @@ export default {
       },
       async unlock() { if (await ctx.vault.ensure()) load(); },
       async addList() {
-        const r = await call(api => api.post(url(active, 'lists'), { title: t('lists.newTitle'), ...freeSpot() }));
+        const r = await call(api => api.post(url(active, 'lists'), { title: t('lists.newTitle'), ...freeSpot(SIZES.list.w, 160) }));
         if (!r) return;
         renderLists();
         const input = ctx.root.querySelector(`[data-list="${CSS.escape(r.lists.at(-1).id)}"] [data-list-title]`);
@@ -321,7 +326,7 @@ export default {
       },
       async addNote() {
         flushNotes();
-        const r = await call(api => api.post(url(active, 'notes'), { text: '', ...freeSpot() }));
+        const r = await call(api => api.post(url(active, 'notes'), { text: '', ...freeSpot(SIZES.note.w, SIZES.note.h) }));
         if (!r) return;
         renderNotes();
         ctx.root.querySelector(`[data-note="${CSS.escape(r.notes.at(-1).id)}"] textarea`)?.focus();
@@ -364,11 +369,11 @@ export default {
       const color = e.target.closest('[data-color]')?.dataset.color;
       if (color) {
         clearTimeout(pending.get(note.dataset.note)); pending.delete(note.dataset.note);
-        const text = note.querySelector('textarea').value;
+        const text = note.querySelector('textarea').value, title = note.querySelector('[data-note-title]').value;
         const n = board.notes.find(x => x.id === note.dataset.note);
-        call(api => api.put(url(active, 'notes', n.id), { color, text, updatedAt: n.updatedAt })).then(r => r && renderNotes());
+        call(api => api.put(url(active, 'notes', n.id), { color, title, text, updatedAt: n.updatedAt })).then(r => r && renderNotes());
       } else if (e.target.closest('[data-del-note]')) {
-        const text = note.querySelector('textarea').value;
+        const text = note.querySelector('textarea').value + note.querySelector('[data-note-title]').value;
         if (text.trim() && !confirm(t('notes.confirmDelete'))) return;
         clearTimeout(pending.get(note.dataset.note)); pending.delete(note.dataset.note);
         call(api => api.del(url(active, 'notes', note.dataset.note))).then(r => r && renderNotes());
@@ -398,6 +403,9 @@ export default {
         if (!text) return;
         el.value = '';
         call(api => api.post(url(active, 'lists', el.dataset.add, 'items'), { text })).then(r => r && renderLists());
+      } else if (e.key === 'Enter' && el.matches('[data-note-title]')) {
+        e.preventDefault();
+        el.closest('[data-note]').querySelector('textarea').focus(); // dal titolo al testo
       } else if (e.key === 'Enter' && el.matches('[data-text], [data-list-title]')) {
         e.preventDefault();
         el.blur(); // salva con "change"
@@ -408,7 +416,7 @@ export default {
     });
 
     ctx.root.addEventListener('input', e => {
-      if (!e.target.matches('[data-note-text]')) return;
+      if (!e.target.matches('[data-note-text], [data-note-title]')) return;
       scheduleNote(e.target.closest('[data-note]').dataset.note);
     });
 

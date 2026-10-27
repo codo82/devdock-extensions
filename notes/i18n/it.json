@@ -49,7 +49,7 @@
   "errors.board_unreadable": "Contenuto della bacheca non leggibile",
   "errors.project_not_found": "Progetto {id} non trovato",
   "errors.title_required": "Il nome della lista è obbligatorio",
-  "errors.title_too_long": "Nome troppo lungo (massimo {max} caratteri)",
+  "errors.title_too_long": "Titolo troppo lungo (massimo {max} caratteri)",
   "errors.item_required": "Il testo della voce è obbligatorio",
   "errors.item_too_long": "Voce troppo lunga (massimo {max} caratteri)",
   "errors.note_required": "Testo della nota mancante",
@@ -74,5 +74,9 @@
   "board.empty": "Bacheca vuota: aggiungi una lista o una nota con i pulsanti in alto, poi trascinale dove vuoi.",
   "board.drag": "Trascina per spostare",
   "lists.resize": "Trascina per cambiare la larghezza; doppio clic: larghezza iniziale",
-  "errors.card_not_found": "Scheda non trovata"
+  "errors.card_not_found": "Scheda non trovata",
+  "notes.title": "Titolo della nota",
+  "notes.titlePlaceholder": "Titolo",
+  "lists.progress": "{done} di {total} completate",
+  "errors.title_invalid": "Titolo non valido"
 }

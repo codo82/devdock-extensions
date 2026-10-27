@@ -70,6 +70,12 @@ test('note: colore, salvataggio, modifica concorrente rifiutata; bacheca vuota t
   r = await api('PUT', `${G}/notes/${note.id}`, { text: 'vecchia', updatedAt: note.updatedAt });
   assert.deepEqual([r.status, r.json.code], [409, 'notes.note_changed']);
   assert.equal((await api('PUT', `${G}/notes/${note.id}`, { color: 'rosso' })).json.code, 'notes.color_invalid');
+  // titolo facoltativo, ripulito dagli spazi
+  assert.equal(note.title, '');
+  r = await api('PUT', `${G}/notes/${note.id}`, { title: '  Wi-fi  ' });
+  assert.equal(r.json.notes[0].title, 'Wi-fi');
+  assert.equal((await api('PUT', `${G}/notes/${note.id}`, { title: 'x'.repeat(201) })).json.code, 'notes.title_too_long');
+  assert.equal((await api('PUT', `${G}/notes/${note.id}`, { title: 5 })).json.code, 'notes.title_invalid');
   // posizione libera e dimensioni sulla bacheca; la scheda spostata va sopra le altre
   assert.deepEqual([note.x, note.y, note.w, note.h], [40, 60, 240, 180]);
   r = await api('POST', `${G}/lists`, { title: 'Sopra', x: 100, y: 100 });

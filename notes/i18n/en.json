@@ -49,7 +49,7 @@
   "errors.board_unreadable": "Board content unreadable",
   "errors.project_not_found": "Project {id} not found",
   "errors.title_required": "The list name is required",
-  "errors.title_too_long": "Name too long (at most {max} characters)",
+  "errors.title_too_long": "Title too long (at most {max} characters)",
   "errors.item_required": "The item text is required",
   "errors.item_too_long": "Item too long (at most {max} characters)",
   "errors.note_required": "Note text missing",
@@ -74,5 +74,9 @@
   "board.empty": "Empty board: add a list or a note with the buttons above, then drag them where you like.",
   "board.drag": "Drag to move",
   "lists.resize": "Drag to change the width; double click: initial width",
-  "errors.card_not_found": "Card not found"
+  "errors.card_not_found": "Card not found",
+  "notes.title": "Note title",
+  "notes.titlePlaceholder": "Title",
+  "lists.progress": "{done} of {total} done",
+  "errors.title_invalid": "Invalid title"
 }
