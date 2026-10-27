@@ -1,0 +1,92 @@
+// API: tutto dietro la master password, contenuto mai in chiaro in config.json, liste e voci,
+// note con il controllo delle modifiche concorrenti, cambio e reset della master password
+const { test, before, after } = require('node:test');
+const assert = require('node:assert/strict');
+const path = require('path');
+const { startServer, tmpDir } = require('devdock/testkit');
+
+const EXT = path.join(__dirname, '..');
+let srv;
+before(async () => {
+  srv = await startServer({ projects: [{ id: 'shop', label: 'Shop', path: tmpDir() }] }, { install: [EXT] });
+});
+after(() => srv?.stop());
+
+const api = (method, p, body) => srv.request(method, `${p.startsWith('/vault') ? '/api/core' : '/api/ext/notes'}${p}`, { body });
+const G = '/boards/%40general';
+
+test('senza vault sbloccato non si legge né si scrive', async () => {
+  let r = await api('GET', '/boards');
+  assert.deepEqual([r.status, r.json.code], [423, 'core.vault_missing']);
+  r = await api('POST', `${G}/lists`, { title: 'Spesa' });
+  assert.equal(r.status, 423);
+  assert.equal((await api('POST', '/vault/init', { password: 'master-password-notes' })).status, 200);
+  assert.deepEqual((await api('GET', '/boards')).json.boards, []);
+});
+
+test('liste e voci: aggiunta, spunta, testo, ordine, completate tolte; contenuto cifrato', async () => {
+  let r = await api('POST', '/boards/shop/lists', { title: 'Rilascio 2.0' });
+  assert.equal(r.status, 200);
+  const list = r.json.lists[0].id;
+  for (const text of ['scrivere il changelog segreto', 'taggare', 'pubblicare']) r = await api('POST', `/boards/shop/lists/${list}/items`, { text });
+  const [a, b, c] = r.json.lists[0].items.map(i => i.id);
+  assert.deepEqual(r.json.counts, { open: 3, items: 3, lists: 1, notes: 0 });
+  assert.doesNotMatch(JSON.stringify(srv.readConfig()), /changelog segreto|Rilascio/);
+  assert.ok(srv.readConfig().notesBoards[0].box.data);
+
+  r = await api('PUT', `/boards/shop/lists/${list}/items/${b}`, { done: true });
+  const done = r.json.lists[0].items.find(i => i.id === b);
+  assert.equal(done.done, true);
+  assert.ok(done.doneAt);
+  assert.equal(r.json.counts.open, 2);
+  r = await api('PUT', `/boards/shop/lists/${list}/items/${a}`, { text: '  scrivere il changelog  ' });
+  assert.equal(r.json.lists[0].items[0].text, 'scrivere il changelog');
+  r = await api('PUT', `/boards/shop/lists/${list}/items/order`, { ids: [c, a, b] });
+  assert.deepEqual(r.json.lists[0].items.map(i => i.id), [c, a, b]);
+  assert.equal((await api('PUT', `/boards/shop/lists/${list}/items/order`, { ids: [c, a] })).json.code, 'notes.order_invalid');
+  r = await api('POST', `/boards/shop/lists/${list}/clear-done`, {});
+  assert.deepEqual(r.json.lists[0].items.map(i => i.id), [c, a]);
+
+  // errori chiari
+  assert.equal((await api('POST', `/boards/shop/lists/${list}/items`, { text: '  ' })).json.code, 'notes.item_required');
+  assert.equal((await api('POST', `/boards/shop/lists/${list}/items`, { text: 'x'.repeat(1001) })).json.code, 'notes.item_too_long');
+  assert.equal((await api('PUT', `/boards/shop/lists/nope`, { title: 'X' })).status, 404);
+  assert.equal((await api('POST', '/boards/sconosciuto/lists', { title: 'X' })).json.code, 'notes.project_not_found');
+  assert.equal((await api('GET', '/boards/..%2Fx')).status, 400);
+
+  r = await api('GET', '/boards');
+  assert.deepEqual(r.json.boards, [{ board: 'shop', counts: { open: 2, items: 2, lists: 1, notes: 0 } }]);
+});
+
+test('note: colore, salvataggio, modifica concorrente rifiutata; bacheca vuota tolta', async () => {
+  let r = await api('POST', `${G}/notes`, { text: '' });
+  const note = r.json.notes[0];
+  assert.equal(note.color, 'yellow');
+  r = await api('PUT', `${G}/notes/${note.id}`, { text: 'password del wifi: no, quella va altrove', color: 'blue', updatedAt: note.updatedAt });
+  assert.equal(r.status, 200);
+  const saved = r.json.notes[0];
+  assert.equal(saved.color, 'blue');
+  // un'altra scheda con la versione vecchia non sovrascrive
+  r = await api('PUT', `${G}/notes/${note.id}`, { text: 'vecchia', updatedAt: note.updatedAt });
+  assert.deepEqual([r.status, r.json.code], [409, 'notes.note_changed']);
+  assert.equal((await api('PUT', `${G}/notes/${note.id}`, { color: 'rosso' })).json.code, 'notes.color_invalid');
+  assert.doesNotMatch(JSON.stringify(srv.readConfig()), /wifi/);
+
+  r = await api('DELETE', `${G}/notes/${note.id}`);
+  assert.deepEqual(r.json.notes, []);
+  assert.ok(!srv.readConfig().notesBoards.some(b => b.board === '@general'));
+});
+
+test('cambio della master password: contenuto ri-cifrato e ancora leggibile; reset: perso', async () => {
+  const before = srv.readConfig().notesBoards[0].box.data;
+  let r = await api('POST', '/vault/change', { oldPassword: 'master-password-notes', newPassword: 'nuova-master-password' });
+  assert.equal(r.status, 200);
+  assert.notEqual(srv.readConfig().notesBoards[0].box.data, before);
+  r = await api('GET', '/boards/shop');
+  assert.equal(r.json.lists[0].title, 'Rilascio 2.0');
+
+  await api('POST', '/vault/lock', {});
+  assert.equal((await api('GET', '/boards/shop')).status, 423);
+  assert.equal((await api('POST', '/vault/reset', { confirm: 'RESET' })).status, 200);
+  assert.deepEqual(srv.readConfig().notesBoards, []);
+});

@@ -1,0 +1,124 @@
+{
+  "name": {
+    "it": "Note",
+    "en": "Notes"
+  },
+  "code": "notes",
+  "version": "1.0.0",
+  "devdock": "^2.3",
+  "description": {
+    "it": "To-do e note per progetto: liste di frasi da spuntare e note tipo post-it, cifrate con la master password",
+    "en": "To-dos and notes per project: lists of items to check and sticky notes, encrypted with the master password"
+  },
+  "color": "#e3b341",
+  "icon": "📝",
+  "position": "tab",
+  "order": 60,
+  "config": [
+    "notesBoards"
+  ],
+  "export": [
+    {
+      "id": "notes",
+      "label": {
+        "it": "Note e to-do",
+        "en": "Notes and to-dos"
+      },
+      "description": {
+        "it": "Liste e note cifrate (serve la stessa master password)",
+        "en": "Encrypted lists and notes (the same master password is needed)"
+      },
+      "sections": [
+        "notesBoards",
+        "vault"
+      ]
+    }
+  ],
+  "backend": {
+    "module": "server.js",
+    "routes": [
+      {
+        "method": "GET",
+        "path": "/boards",
+        "handler": "listBoards"
+      },
+      {
+        "method": "GET",
+        "path": "/boards/:board",
+        "handler": "getBoard"
+      },
+      {
+        "method": "POST",
+        "path": "/boards/:board/lists",
+        "handler": "addList"
+      },
+      {
+        "method": "PUT",
+        "path": "/boards/:board/lists/order",
+        "handler": "orderLists"
+      },
+      {
+        "method": "PUT",
+        "path": "/boards/:board/lists/:list",
+        "handler": "updateList"
+      },
+      {
+        "method": "DELETE",
+        "path": "/boards/:board/lists/:list",
+        "handler": "deleteList"
+      },
+      {
+        "method": "POST",
+        "path": "/boards/:board/lists/:list/items",
+        "handler": "addItem"
+      },
+      {
+        "method": "PUT",
+        "path": "/boards/:board/lists/:list/items/order",
+        "handler": "orderItems"
+      },
+      {
+        "method": "POST",
+        "path": "/boards/:board/lists/:list/clear-done",
+        "handler": "clearDone"
+      },
+      {
+        "method": "PUT",
+        "path": "/boards/:board/lists/:list/items/:item",
+        "handler": "updateItem"
+      },
+      {
+        "method": "DELETE",
+        "path": "/boards/:board/lists/:list/items/:item",
+        "handler": "deleteItem"
+      },
+      {
+        "method": "POST",
+        "path": "/boards/:board/notes",
+        "handler": "addNote"
+      },
+      {
+        "method": "PUT",
+        "path": "/boards/:board/notes/order",
+        "handler": "orderNotes"
+      },
+      {
+        "method": "PUT",
+        "path": "/boards/:board/notes/:note",
+        "handler": "updateNote"
+      },
+      {
+        "method": "DELETE",
+        "path": "/boards/:board/notes/:note",
+        "handler": "deleteNote"
+      }
+    ]
+  },
+  "frontend": {
+    "html": "view.html",
+    "sidebar": "sidebar.html",
+    "js": "view.js",
+    "css": "style.css",
+    "preload": true
+  }
+}

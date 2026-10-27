@@ -18,6 +18,22 @@
       "path": "mongo-client"
     },
     {
+      "code": "notes",
+      "name": {
+        "it": "Note",
+        "en": "Notes"
+      },
+      "description": {
+        "it": "To-do e note per progetto: liste di frasi da spuntare e note tipo post-it, cifrate con la master password",
+        "en": "To-dos and notes per project: lists of items to check and sticky notes, encrypted with the master password"
+      },
+      "icon": "📝",
+      "version": "1.0.0",
+      "devdock": "^2.3",
+      "repo": "https://github.com/codo82/devdock-extensions.git",
+      "path": "notes"
+    },
+    {
       "code": "pm2",
       "name": "PM2",
       "description": {

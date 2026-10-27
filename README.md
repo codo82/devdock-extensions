@@ -7,6 +7,7 @@ Official extensions for [DevDock](https://github.com/codo82/devdock), the local 
 | ⚙️ PM2 | [`pm2`](pm2) | PM2 processes: list, start/stop/restart/delete, streaming logs; npm scripts started under PM2 from the NPM section |
 | 🔌 Ports | [`ports`](ports) | Listening TCP ports with their process, linked to what DevDock started (npm, PM2, tunnels); stop of the process that holds a port |
 | 🍃 MongoDB | [`mongo-client`](mongo-client) | MongoDB client with the features of the DevDock Database section: connections (host, URI or SSH tunnel) in folders with passwords in the DevDock vault, mongosh editor with history, documents as JSON or table with inline edit, every change shown and confirmed, collections and indexes designer, structure, export as JSON/CSV/script, read-only MCP tools |
+| 📝 Notes | [`notes`](notes) | To-do lists and sticky notes per project (plus *General*), encrypted with the master password: lists of items to check, reorderable, with the open items on the tab; coloured notes saved automatically |
 | 📄 Swagger | [`swagger`](swagger) | Preview of an OpenAPI `.yaml`/`.json` file loaded from disk (Swagger UI from CDN) |
 
 PM2 and Ports were built into DevDock up to 1.23, Swagger up to 2.0. All of them require DevDock 2.0 or later.
@@ -20,9 +21,10 @@ npm run ext -- install pm2
 npm run ext -- install ports
 npm run ext -- install mongo-client
 npm run ext -- install swagger
+npm run ext -- install notes
 ```
 
-Any extension can also be installed by URL (🧩 → **From URL**): `https://github.com/codo82/devdock-extensions.git` with the folder of the extension (`pm2`, `ports`, `mongo-client`, `swagger`).
+Any extension can also be installed by URL (🧩 → **From URL**): `https://github.com/codo82/devdock-extensions.git` with the folder of the extension (`pm2`, `ports`, `mongo-client`, `swagger`, `notes`).
 
 ## Versions
 
