@@ -4,6 +4,8 @@ All notable changes to the `notes` extension. The format follows [Keep a Changel
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-27
+
 ### Changed
 - **Free board**: lists and notes are no longer in two separate grids: they stay together on one board where each one is placed freely, dragged from its top bar (⠿ on lists, the band on notes) to any position, on a 10 px step. The board grows as cards are moved further right or down; cards can overlap, the last one moved stays on top.
 - Lists can be made wider or narrower from their bottom-right corner (their height follows the items); notes are resized freely in width and height. A double click on the corner gives back the initial size.
