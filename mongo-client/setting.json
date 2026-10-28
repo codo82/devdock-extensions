@@ -4,7 +4,7 @@
     "en": "MongoDB"
   },
   "code": "mongo-client",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "kelbo": "^2.0",
   "devdock": "^2.0",
   "description": {
