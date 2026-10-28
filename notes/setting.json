@@ -5,6 +5,7 @@
   },
   "code": "notes",
   "version": "1.3.0",
+  "kelbo": "^2.3",
   "devdock": "^2.3",
   "description": {
     "it": "To-do e note per progetto: liste di frasi da spuntare e note tipo post-it, cifrate con la master password",

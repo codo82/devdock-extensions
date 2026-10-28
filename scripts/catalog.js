@@ -4,10 +4,10 @@
 //   npm run catalog -- --check controlla che index.json sia aggiornato e i manifest validi (CI)
 const fs = require('fs');
 const path = require('path');
-const { validateManifest } = require('devdock/testkit');
+const { validateManifest } = require('kelbo/testkit');
 
 const ROOT = path.join(__dirname, '..');
-const REPO = 'https://github.com/codo82/devdock-extensions.git';
+const REPO = 'https://github.com/kelbodev/kelbo-extensions.git';
 const FILE = path.join(ROOT, 'index.json');
 
 function build() {
@@ -21,10 +21,10 @@ function build() {
     try { m = validateManifest(raw, folder); } catch (e) { throw new Error(`${folder}: ${e.message}`); }
     return {
       code: m.code, name: m.name, description: m.description || '', icon: m.icon || null,
-      version: m.version, devdock: m.devdock, repo: REPO, path: folder,
+      version: m.version, kelbo: m.kelbo, repo: REPO, path: folder,
     };
   });
-  return JSON.stringify({ name: 'DevDock official extensions', extensions }, null, 2) + '\n';
+  return JSON.stringify({ name: 'Kelbo official extensions', extensions }, null, 2) + '\n';
 }
 
 const text = build();

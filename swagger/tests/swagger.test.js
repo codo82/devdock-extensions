@@ -2,7 +2,7 @@
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
-const { startServer } = require('devdock/testkit');
+const { startServer } = require('kelbo/testkit');
 
 const EXT = path.join(__dirname, '..');
 let srv;

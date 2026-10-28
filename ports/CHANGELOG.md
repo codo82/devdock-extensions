@@ -4,6 +4,9 @@ All notable changes to the `ports` extension. The format follows [Keep a Changel
 
 ## [Unreleased]
 
+### Changed
+- Kelbo, the new name of DevDock: texts and MCP description say Kelbo; the owner type of Kelbo's own process is `kelbo` (was `devdock`) in the API and in the `ports_list` MCP tool; manifest field `"kelbo"` next to `"devdock"`.
+
 ## [1.0.0] - 2026-10-24
 
 ### Changed

@@ -4,6 +4,9 @@ All notable changes to the `mongo-client` extension. The format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+- Kelbo, the new name of DevDock: texts, MCP tool descriptions and the MongoDB `appName` say Kelbo; package `kelbo-ext-mongo-client`; manifest field `"kelbo"` next to `"devdock"` (same range, read by Kelbo before 2.13).
+
 ## [1.2.0] - 2026-10-24
 
 ### Changed

@@ -3,7 +3,7 @@
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
-const { startServer, mcpClient } = require('devdock/testkit');
+const { startServer, mcpClient } = require('kelbo/testkit');
 
 const EXT = path.join(__dirname, '..');
 let srv, mcp;
@@ -175,7 +175,7 @@ test('operazioni dei dialoghi: anteprime di celle modificate, collezione, indice
   assert.match(r.preview, /\.renameCollection\("people"\)$/);
 });
 
-test('import: connessioni di un altro DevDock con un\'altra master password, ri-cifrate', async () => {
+test('import: connessioni di un altro Kelbo con un\'altra master password, ri-cifrate', async () => {
   // file esportato da un'altra istanza con la sua master password
   const other = await startServer({ projects: [] }, { install: [EXT] });
   try {

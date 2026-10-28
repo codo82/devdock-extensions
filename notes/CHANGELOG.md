@@ -4,6 +4,9 @@ All notable changes to the `notes` extension. The format follows [Keep a Changel
 
 ## [Unreleased]
 
+### Changed
+- Manifest field `"kelbo"` (the new name of DevDock) next to `"devdock"`, with the same range.
+
 ## [1.3.0] - 2026-10-27
 
 ### Added

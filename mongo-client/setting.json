@@ -5,6 +5,7 @@
   },
   "code": "mongo-client",
   "version": "1.2.0",
+  "kelbo": "^2.0",
   "devdock": "^2.0",
   "description": {
     "it": "Client MongoDB: connessioni con password nel vault, editor mongosh, documenti in JSON o tabella, modifiche sempre confermate, collezioni e indici, export JSON/CSV/script",
@@ -143,7 +144,7 @@
         "name": "connections",
         "handler": "connections",
         "readOnly": true,
-        "description": "MongoDB connections configured in DevDock (no credentials). Requires the DevDock vault to be unlocked from its UI.",
+        "description": "MongoDB connections configured in Kelbo (no credentials). Requires the Kelbo vault to be unlocked from its UI.",
         "inputSchema": {
           "type": "object",
           "properties": {}

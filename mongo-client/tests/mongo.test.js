@@ -3,7 +3,7 @@
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
-const { startServer, mcpClient } = require('devdock/testkit');
+const { startServer, mcpClient } = require('kelbo/testkit');
 
 const EXT = path.join(__dirname, '..');
 let mongod = null, srv, mcp, skipReason = null;

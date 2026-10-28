@@ -1,7 +1,8 @@
 {
-  "name": "devdock-extensions",
+  "name": "kelbo-extensions",
   "private": true,
-  "description": "Official DevDock extensions and catalog: one folder per extension, installable from the DevDock Extensions panel",
+  "description": "Official Kelbo extensions and catalog: one folder per extension, installable from the Kelbo Extensions panel",
+  "license": "Apache-2.0",
   "workspaces": [
     "mongo-client"
   ],
@@ -14,7 +15,7 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "devdock": "github:codo82/devdock#main",
+    "kelbo": "github:kelbodev/kelbo#main",
     "mongodb-memory-server": "^11.3.0"
   }
 }

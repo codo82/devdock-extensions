@@ -1,5 +1,5 @@
 // Porte in uso: tabella con ricerca, filtro sui processi dell'utente e arresto
-// del processo (tramite l'estensione che l'ha avviato, se è di DevDock)
+// del processo (tramite l'estensione che l'ha avviato, se è di Kelbo)
 
 export default {
   mount(ctx) {
@@ -15,7 +15,7 @@ export default {
       render();
     }
 
-    const ownerLabel = o => o && o.type !== 'devdock' ? `${t(`owner.${o.type}`)}: ${o.label}` : o ? t('owner.devdock') : '';
+    const ownerLabel = o => o && o.type !== 'kelbo' ? `${t(`owner.${o.type}`)}: ${o.label}` : o ? t('owner.kelbo') : '';
 
     function render() {
       const q = $('search').value.trim().toLowerCase();
@@ -25,7 +25,7 @@ export default {
       $('count').textContent = t('count', { count: list.length });
       $('content').innerHTML = !list.length ? `<div class="ports-muted">${esc(t(ports.length ? 'noMatch' : 'none'))}</div>` : `
         <table class="data-table ports-table">
-          <thead><tr><th>${esc(t('col.port'))}</th><th>${esc(t('col.process'))}</th><th>${esc(t('col.pid'))}</th><th>${esc(t('col.user'))}</th><th>${esc(t('col.devdock'))}</th><th>${esc(t('col.command'))}</th><th></th></tr></thead>
+          <thead><tr><th>${esc(t('col.port'))}</th><th>${esc(t('col.process'))}</th><th>${esc(t('col.pid'))}</th><th>${esc(t('col.user'))}</th><th>${esc(t('col.startedBy'))}</th><th>${esc(t('col.command'))}</th><th></th></tr></thead>
           <tbody>${list.map(p => `<tr>
             <td><span class="ports-port">${esc(p.port)}</span> <span class="ports-addr">${esc(p.addresses.join(', '))}</span></td>
             <td>${esc(p.name || '—')}</td>
@@ -33,13 +33,13 @@ export default {
             <td>${esc(p.user || '—')}</td>
             <td>${p.owner ? `<span class="ports-owner">${esc(ownerLabel(p.owner))}</span>` : ''}</td>
             <td><div class="ports-cmd" title="${esc(p.command || '')}">${esc(p.command || '')}</div></td>
-            <td>${p.own && p.pid && p.owner?.type !== 'devdock'
+            <td>${p.own && p.pid && p.owner?.type !== 'kelbo'
               ? `<button class="btn btn-ghost btn-sm" onclick="Ext.ports.askStop(${js(String(p.port))}, ${js(String(p.pid))})">${esc(t('stop'))}</button>` : ''}</td>
           </tr>`).join('')}</tbody>
         </table>`;
     }
 
-    // Conferma con PID e comando; per i processi non avviati da DevDock si può forzare
+    // Conferma con PID e comando; per i processi non avviati da Kelbo si può forzare
     function askStop(port, pid) {
       const p = ports.find(x => String(x.port) === port && String(x.pid) === pid);
       if (!p) return;

@@ -2,6 +2,7 @@
   "name": { "it": "Porte", "en": "Ports" },
   "code": "ports",
   "version": "1.0.0",
+  "kelbo": "^2.0",
   "devdock": "^2.0",
   "description": {
     "it": "Porte TCP in ascolto con il processo che le usa, collegate a script npm, PM2 e tunnel; arresto del processo che occupa una porta",
@@ -26,7 +27,7 @@
   "mcp": {
     "tools": [
       { "name": "list", "handler": "list", "readOnly": true,
-        "description": "List the listening TCP ports of this machine with the process (pid, name, user, command line) and, when known, what started it in DevDock (npm project and script, PM2 process, SSH tunnel). Optional filter by port.",
+        "description": "List the listening TCP ports of this machine with the process (pid, name, user, command line) and, when known, what started it in Kelbo (npm project and script, PM2 process, SSH tunnel). Optional filter by port.",
         "inputSchema": { "type": "object", "properties": { "port": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "Only this port" } } } }
     ]
   },

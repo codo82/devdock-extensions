@@ -4,6 +4,9 @@ All notable changes to the `swagger` extension. The format follows [Keep a Chang
 
 ## [Unreleased]
 
+### Changed
+- Manifest field `"kelbo"` (the new name of DevDock) next to `"devdock"`, with the same range.
+
 ## [1.0.0] - 2026-10-24
 
 ### Changed

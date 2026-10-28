@@ -178,7 +178,7 @@ module.exports = function createMongoClient(ctx) {
     if (cached) closeClients(c.id);
     const client = new MongoClient(uri, {
       serverSelectionTimeoutMS: CONNECT_TIMEOUT_MS, connectTimeoutMS: CONNECT_TIMEOUT_MS,
-      appName: 'DevDock', promoteLongs: false, ignoreUndefined: true,
+      appName: 'Kelbo', promoteLongs: false, ignoreUndefined: true,
       ...(c.readOnly ? { readPreference: 'secondaryPreferred' } : {}),
     });
     await run(() => client.connect());
@@ -248,7 +248,7 @@ module.exports = function createMongoClient(ctx) {
 
   // ---- modifiche: anteprima, token di conferma, esecuzione ----
 
-  const confirmSecret = crypto.randomBytes(32); // i token valgono fino al riavvio di DevDock
+  const confirmSecret = crypto.randomBytes(32); // i token valgono fino al riavvio di Kelbo
   const tokenOf = (connId, op) => crypto.createHmac('sha256', confirmSecret).update(`${connId}\0${JSON.stringify(op)}`).digest('hex');
 
   // Operazione dal client → forma normalizzata (documenti come Extended JSON canonico) e anteprima

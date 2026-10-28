@@ -3,9 +3,9 @@ const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
 const { spawn } = require('child_process');
-const { startServer, tmpDir, makeRepo } = require('devdock/testkit');
+const { startServer, tmpDir, makeRepo } = require('kelbo/testkit');
 
-const EXT = path.join(__dirname, '..'); // l'estensione sotto test, installata nel DevDock di prova
+const EXT = path.join(__dirname, '..'); // l'estensione sotto test, installata nel Kelbo di prova
 
 const listenScript = port => `require('http').createServer((q, r) => r.end('ok')).listen(${port}, '127.0.0.1')`;
 const freePort = () => new Promise(r => { const s = require('net').createServer().listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => r(port)); }); });
@@ -43,7 +43,7 @@ test('porta di un processo qualsiasi: trovata e fermata', { skip: process.platfo
   } finally { if (alive(child.pid)) child.kill('SIGKILL'); }
 });
 
-test('porta di uno script npm avviato da DevDock: fermata tramite npm', { skip: process.platform === 'win32' }, async () => {
+test('porta di uno script npm avviato da Kelbo: fermata tramite npm', { skip: process.platform === 'win32' }, async () => {
   await srv.request('POST', '/api/ext/npm/projects/web/run', { body: { script: 'serve' } });
   const p = await waitPort(npmPort);
   assert.ok(p);
@@ -56,9 +56,9 @@ test('porta di uno script npm avviato da DevDock: fermata tramite npm', { skip: 
   assert.equal(alive(p.pid), false);
 });
 
-test('DevDock stesso e porte non più in ascolto non si fermano', async () => {
+test('Kelbo stesso e porte non più in ascolto non si fermano', async () => {
   const me = (await list()).find(x => x.port === srv.port);
-  assert.equal(me.owner.type, 'devdock');
+  assert.equal(me.owner.type, 'kelbo');
   let r = await srv.request('POST', '/api/ext/ports/stop', { body: { port: srv.port, pid: me.pid } });
   assert.equal(r.json.code, 'ports.self');
   r = await srv.request('POST', '/api/ext/ports/stop', { body: { port: 1, pid: 999999 } });

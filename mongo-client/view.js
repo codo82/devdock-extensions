@@ -211,7 +211,7 @@ export default {
     const $ = (root, role) => root.querySelector(`[data-role="${role}"]`);
     const byId = id => document.getElementById(id);
     // contenitori ridisegnati: niente se l'HTML non cambia, rimandato a dopo un clic in corso
-    // (DevDock ≥ 2.3); con versioni precedenti un semplice innerHTML
+    // (Kelbo ≥ 2.3); con versioni precedenti un semplice innerHTML
     const patch = ctx.ui.patch || ((el, html) => { el.innerHTML = html; });
 
     let connections = [];

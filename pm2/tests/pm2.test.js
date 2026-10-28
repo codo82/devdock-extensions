@@ -1,9 +1,9 @@
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
-const { startServer, tmpDir, makeRepo } = require('devdock/testkit');
+const { startServer, tmpDir, makeRepo } = require('kelbo/testkit');
 
-const EXT = path.join(__dirname, '..'); // l'estensione sotto test, installata nel DevDock di prova
+const EXT = path.join(__dirname, '..'); // l'estensione sotto test, installata nel Kelbo di prova
 
 let srv;
 before(async () => {
@@ -35,7 +35,7 @@ test('azioni e nomi validati, nessun crash senza pm2', async () => {
 
 test('con pm2 installato: lista e azioni (pm2 finto nel PATH)', async () => {
   const fs = require('fs');
-  const bin = tmpDir('devdock-pm2-');
+  const bin = tmpDir('kelbo-pm2-');
   const log = path.join(bin, 'calls.log');
   fs.writeFileSync(path.join(bin, 'pm2'), `#!/bin/sh
 echo "$@" >> "${log}"
